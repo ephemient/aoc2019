@@ -92,9 +92,9 @@ val ktlintIdea by tasks.creating(JavaExec::class) {
     description = "Apply ktlint style to IntelliJ IDEA project."
     main = "com.pinterest.ktlint.Main"
     classpath = buildscript.configurations["classpath"]
-    args("--apply-to-idea", "-y")
+    args("applyToIDEAProject", "-y")
 }
 
 tasks.wrapper {
-    gradleVersion = "6.0"
+    gradleVersion = "6.0.1"
 }

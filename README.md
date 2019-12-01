@@ -32,3 +32,9 @@ Run [ktlint](https://ktlint.github.io/) Kotlin linter:
 ```sh
 ./gradlew lintKotlin
 ```
+
+Check for newer versions of dependencies:
+
+```sh
+./gradlew dependencyUpdates -Drevision=release
+```
