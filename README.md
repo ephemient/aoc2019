@@ -33,6 +33,12 @@ Run [ktlint](https://ktlint.github.io/) Kotlin linter:
 ./gradlew lintKotlin
 ```
 
+Run [Detekt](https://ktlint.github.io/) static code analysis:
+
+```sh
+./gradlew detekt
+```
+
 Check for newer versions of dependencies:
 
 ```sh

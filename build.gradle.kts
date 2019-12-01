@@ -1,4 +1,5 @@
 plugins {
+    id("io.gitlab.arturbosch.detekt")
     id("org.jetbrains.dokka")
     kotlin("jvm")
     id("org.jmailen.kotlinter")
@@ -42,6 +43,14 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 kotlinter {
     ignoreFailures = project.hasProperty("lintContinueOnError")
     experimentalRules = project.hasProperty("lintKotlinExperimental")
+}
+
+detekt {
+    val detektVersion: String by project
+    toolVersion = detektVersion
+    config = rootProject.files("detekt.yml")
+    buildUponDefaultConfig = true
+    baseline = rootProject.file("detekt-baseline.xml")
 }
 
 tasks.withType<Test> {
