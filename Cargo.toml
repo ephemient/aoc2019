@@ -1,0 +1,16 @@
+[package]
+name = "aoc2019"
+description = "Advent of Code 2019 - my answers"
+version = "0.1.0"
+authors = ["Daniel Lin <ephemient@gmail.com>"]
+license = "BSD-3-Clause"
+edition = "2018"
+readme = "README.md"
+homepage = "https://github.com/ephemient/aoc2019/tree/rs"
+build = "build.rs"
+
+[build-dependencies]
+build_const = "0.1"
+
+[dependencies]
+build_const = "0.1"
