@@ -4,9 +4,9 @@ use std::str::FromStr;
 
 pub fn to_ioerror<E>(error: E) -> io::Error
 where
-    E: Into<Box<dyn error::Error+Send+Sync>>
+    E: Into<Box<dyn error::Error + Send + Sync>>,
 {
-    return io::Error::new(io::ErrorKind::Other, error);
+    io::Error::new(io::ErrorKind::Other, error)
 }
 
 pub fn parse_many<'a, F, I, S>(lines: I) -> Result<Vec<F>, <F as FromStr>::Err>
@@ -15,9 +15,10 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    return Result::Ok(lines
-        .into_iter()
-        .map(|s| s.as_ref().parse::<F>())
-        .collect::<Result<Vec<F>, <F as FromStr>::Err>>()?
+    Result::Ok(
+        lines
+            .into_iter()
+            .map(|s| s.as_ref().parse::<F>())
+            .collect::<Result<Vec<F>, <F as FromStr>::Err>>()?,
     )
 }
