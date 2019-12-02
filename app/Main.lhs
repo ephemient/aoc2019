@@ -1,5 +1,5 @@
 # [Advent of Code 2019](https://adventofcode.com/2019)
-### my answers in [Haskell](https://www.haskell.org/) (see also [Kotlin branch](https://github.com/ephemient/aoc2019/tree/kt) and [Python branch](https://github.com/ephemient/aoc2019/tree/py))
+### my answers in [Haskell](https://www.haskell.org/) (see also [Kotlin branch](https://github.com/ephemient/aoc2019/tree/kt), [Python branch](https://github.com/ephemient/aoc2019/tree/py), and [Rust branch](https://github.com/ephemient/aoc2019/tree/rs))
 
 This project builds with [The Haskell Tool Stack](https://haskellstack.org/).
 
