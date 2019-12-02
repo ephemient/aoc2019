@@ -1,3 +1,4 @@
+import io
 import pkg_resources
 import sys
 
@@ -9,7 +10,9 @@ def main():
         if args and day not in args:
             continue
         print(f'Day {day}')
-        with pkg_resources.resource_stream('aoc2019', f'day{day}.txt') as fh:
+        with io.TextIOWrapper(
+                pkg_resources.resource_stream('aoc2019',
+                                              f'day{day}.txt')) as fh:
             data = fh.readlines()
         for part in entry.load():
             print(part(data))
