@@ -20,11 +20,14 @@ application {
 defaultTasks = listOf("check", "run")
 
 dependencies {
+    val guavaVersion: String by project
     val junitVersion: String by project
+    val truthVersion: String by project
 
-    implementation(kotlin("reflect"))
     implementation(kotlin("stdlib-jdk8"))
+    implementation("com.google.guava:guava:$guavaVersion")
     testImplementation(kotlin("test-junit5"))
+    testImplementation("com.google.truth:truth:$truthVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     jmhImplementation(kotlin("reflect"))
     jmhImplementation(kotlin("stdlib-jdk8"))
