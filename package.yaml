@@ -24,6 +24,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - array
+  - megaparsec
 
 executables:
   aoc2019-exe:
@@ -53,6 +56,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - aoc2019
+    - array
     - hspec
 
 benchmarks:
