@@ -96,5 +96,5 @@ main :: IO ()
 main = do
     run 1 getDayInput print [day1a, day1b]
     run 2 getDayInput print [day2a, day2b]
-    run 3 getDayInput (putStrLn . showError show) [day3a, day3b]
+    run 3 getDayInput (putStrLn . showError (maybeBottom show)) [day3a, day3b]
 ```

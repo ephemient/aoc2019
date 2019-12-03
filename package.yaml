@@ -28,6 +28,7 @@ library:
   - array
   - containers
   - megaparsec
+  - mtl
 
 executables:
   aoc2019-exe:

@@ -7,14 +7,14 @@ spec :: Spec
 spec = do
     describe "part 1" $
         it "examples" $ do
-            day3a sample1 `shouldBe` Right 6
-            day3a sample2 `shouldBe` Right 159
-            day3a sample3 `shouldBe` Right 135
+            day3a sample1 `shouldBe` Right (Just 6)
+            day3a sample2 `shouldBe` Right (Just 159)
+            day3a sample3 `shouldBe` Right (Just 135)
     describe "part 2" $
         it "examples" $ do
-            day3b sample1 `shouldBe` Right 30
-            day3b sample2 `shouldBe` Right 610
-            day3b sample3 `shouldBe` Right 410
+            day3b sample1 `shouldBe` Right (Just 30)
+            day3b sample2 `shouldBe` Right (Just 610)
+            day3b sample3 `shouldBe` Right (Just 410)
   where
     sample1 = unlines ["R8,U5,L5,D3", "U7,R6,D4,L4"]
     sample2 = unlines
