@@ -6,7 +6,7 @@ Description:    <https://adventofcode.com/2019/day/3 Day 3: Crossed Wires>
 module Day3 (day3a, day3b) where
 
 import Control.Arrow (first, second)
-import Control.Monad (foldM, foldM_)
+import Control.Monad (foldM_)
 import Control.Monad.Writer.Strict (execWriter, tell)
 import Data.Functor (($>))
 import qualified Data.Map.Strict as Map (alterF, empty)
@@ -25,37 +25,35 @@ parser = line ((0, 0) :) (0, 0) `sepEndBy` space1 where
         let points@(last -> p') = take n . tail $ iterate f p
         option (k points) $ char ',' *> line (k . (points ++)) p'
 
-newtype MaybeMin a = MaybeMin { getMaybeMin :: Maybe a }
-instance (Ord a) => Semigroup (MaybeMin a) where
-    MaybeMin Nothing <> y = y
-    x <> MaybeMin Nothing = x
-    MaybeMin (Just x) <> MaybeMin (Just y) = MaybeMin . Just $! min x y
+newtype Min a = Min { getMin :: Maybe a }
+instance (Ord a) => Semigroup (Min a) where
+    Min Nothing <> y = y
+    x <> Min Nothing = x
+    Min (Just x) <> Min (Just y) = Min . Just $! min x y
     stimes = stimesIdempotentMonoid
-instance (Ord a) => Monoid (MaybeMin a) where
-    mempty = MaybeMin Nothing
+instance (Ord a) => Monoid (Min a) where mempty = Min Nothing
 
 intersections :: (Monad m, Ord k) =>
     (k -> a -> Maybe b -> m (Maybe b)) -> [[(k, a)]] -> m ()
-intersections f = foldM_ follow Map.empty . zip @Int [0..] where
-    follow m (i, walk) = foldM follow' m walk where
-        follow' m' (k, a) = Map.alterF f' k m' where
-            f' Nothing = fmap (i,) <$> f k a Nothing
-            f' old@(Just (j, o))
-              | i == j = pure old
-              | otherwise = fmap (i,) <$> f k a (Just o)
+intersections f =
+    foldM_ follow Map.empty . concat . zipWith @Int (zip . repeat) [0..] where
+    follow m (i, (k, a)) = Map.alterF f' k m where
+        f' old
+          | Just (j, _) <- old, i == j = pure old
+          | otherwise = fmap (i,) <$> f k a (snd <$> old)
 
 day3a :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
-day3a input = getMaybeMin . execWriter . intersections f .
+day3a input = getMin . execWriter . intersections f .
     map (map (, ())) <$> parse parser "" input where
     f (0, 0) _ _ = pure Nothing
     f (manhattan -> d) _ Nothing = pure $ Just d
     f (manhattan -> d) _ (Just o) =
-        let new = Just $! min d o in tell (MaybeMin new) $> new
+        let new = Just $! min d o in tell (Min $! new) $> new
     manhattan (x, y) = abs x + abs y
 
 day3b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
-day3b input = getMaybeMin . execWriter . intersections f .
+day3b input = getMin . execWriter . intersections f .
     map (flip zip [0..]) <$> parse (parser @Int) "" input where
     f (0, 0) _ _ = pure Nothing
     f _ d Nothing = pure $ Just d
-    f _ d (Just o) = tell (MaybeMin . Just $! d + o) $> (Just $! min d o)
+    f _ d (Just o) = tell (Min $! Just $! d + o) $> (Just $! min d o)
