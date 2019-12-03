@@ -26,7 +26,8 @@ library:
   source-dirs: src
   dependencies:
   - array
-  - containers
+  - hashable
+  - hashtables
   - megaparsec
   - mtl
 
