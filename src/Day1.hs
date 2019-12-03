@@ -10,8 +10,8 @@ fuel = subtract 2 . flip div 3
 fuels :: (Integral a) => a -> [a]
 fuels = takeWhile (> 0) . iterate fuel . fuel
 
-day1a :: String -> Int
+day1a :: String -> Integer
 day1a = sum . map (fuel . read) . lines
 
-day1b :: String -> Int
+day1b :: String -> Integer
 day1b = sum . concatMap (fuels . read) . lines

@@ -57,6 +57,10 @@ import Day1 (day1a, day1b)
 ```haskell
 import Day2 (day2a, day2b)
 ```
+## [Day 3: Crossed Wires](/src/Day3.hs)
+```haskell
+import Day3 (day3a, day3b)
+```
 
 ---
 
@@ -92,4 +96,5 @@ main :: IO ()
 main = do
     run 1 getDayInput print [day1a, day1b]
     run 2 getDayInput print [day2a, day2b]
+    run 3 getDayInput (putStrLn . showError show) [day3a, day3b]
 ```
