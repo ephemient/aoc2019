@@ -1,6 +1,22 @@
 use std::error;
+use std::fmt;
 use std::io;
 use std::str::FromStr;
+
+#[derive(Clone, Debug)]
+pub struct Error;
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "error")
+    }
+}
+
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
 
 pub fn to_ioerror<E>(error: E) -> io::Error
 where
