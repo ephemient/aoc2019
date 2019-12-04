@@ -5,7 +5,7 @@ Description:    <https://adventofcode.com/2019/day/1 Day 1: The Tyranny of the R
 module Day1 (day1a, day1b) where
 
 fuel :: (Integral a) => a -> a
-fuel = subtract 2 . flip div 3
+fuel = max 0 . subtract 2 . flip div 3
 
 fuels :: (Integral a) => a -> [a]
 fuels = takeWhile (> 0) . iterate fuel . fuel
