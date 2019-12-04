@@ -78,28 +78,25 @@ import Text.Read (readMaybe)
 getDayInput :: Int -> IO String
 getDayInput i = getDataFileName ("day" ++ show i ++ ".txt") >>= readFile
 
-readDayInput :: (Read a) => Int -> IO a
-readDayInput = fmap read . getDayInput
-
 maybeBottom :: (a -> String) -> Maybe a -> String
 maybeBottom = maybe "(⊥)"
 
 showError :: (Show a) => (b -> String) -> Either a b -> String
 showError = either (\err -> "(" ++ show err ++ ")")
 
-run :: Int -> (Int -> IO a) -> (b -> IO ()) -> [a -> b] -> IO ()
-run day readIO showIO funcs = do
+run :: Int -> (a -> IO ()) -> [String -> a] -> IO ()
+run day showIO funcs = do
     days <- mapMaybe readMaybe <$> getArgs
     when (null days || day `elem` days) $ do
     putStrLn $ "Day " ++ show day
-    contents <- readIO day
+    contents <- getDayInput day
     mapM_ (showIO . ($ contents)) funcs
     putStrLn ""
 
 main :: IO ()
 main = do
-    run 1 getDayInput print [day1a, day1b]
-    run 2 getDayInput print [day2a, day2b]
-    run 3 getDayInput (putStrLn . showError (maybeBottom show)) [day3a, day3b]
-    run 4 getDayInput (putStrLn . showError show) [day4a, day4b]
+    run 1 print [day1a, day1b]
+    run 2 print [day2a, day2b]
+    run 3 (putStrLn . showError (maybeBottom show)) [day3a, day3b]
+    run 4 (putStrLn . showError show) [day4a, day4b]
 ```

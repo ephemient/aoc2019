@@ -10,9 +10,6 @@ import Paths_aoc2019 (getDataFileName)
 getDayInput :: Int -> IO String
 getDayInput i = getDataFileName ("day" ++ show i ++ ".txt") >>= readFile
 
-readDayInput :: (Read a) => Int -> IO a
-readDayInput = fmap read . getDayInput
-
 main :: IO ()
 main = defaultMain
   [ env (getDayInput 1) $ \input -> bgroup "Day 1"
