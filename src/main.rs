@@ -8,6 +8,7 @@ use std::iter::FromIterator;
 
 mod day1;
 mod day2;
+mod day3;
 mod util;
 
 build_const!("aoc2019.rs");
@@ -26,6 +27,13 @@ fn main() -> io::Result<()> {
         println!("Day 2");
         println!("{:?}", day2::part1(DAY2).map_err(util::to_ioerror)?);
         println!("{:?}", day2::part2(DAY2).map_err(util::to_ioerror)?);
+        println!();
+    }
+
+    if args.is_empty() || args.contains("3") {
+        println!("Day 3");
+        println!("{:?}", day3::part1(DAY3).ok_or_else(|| util::to_ioerror(util::Error))?);
+        println!("{:?}", day3::part2(DAY3).ok_or_else(|| util::to_ioerror(util::Error))?);
         println!();
     }
 
