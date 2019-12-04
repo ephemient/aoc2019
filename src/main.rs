@@ -13,6 +13,10 @@ mod util;
 
 build_const!("aoc2019.rs");
 
+fn ioerror() -> io::Error {
+    util::to_ioerror(util::Error)
+}
+
 fn main() -> io::Result<()> {
     let args: HashSet<String> = HashSet::from_iter(env::args().skip(1));
 
@@ -32,10 +36,10 @@ fn main() -> io::Result<()> {
 
     if args.is_empty() || args.contains("3") {
         println!("Day 3");
-        println!("{:?}", day3::part1(DAY3).ok_or_else(|| util::to_ioerror(util::Error))?);
-        println!("{:?}", day3::part2(DAY3).ok_or_else(|| util::to_ioerror(util::Error))?);
+        println!("{:?}", day3::part1(DAY3).ok_or_else(ioerror)?);
+        println!("{:?}", day3::part2(DAY3).ok_or_else(ioerror)?);
         println!();
     }
 
-    return Result::Ok(());
+    return Ok(());
 }

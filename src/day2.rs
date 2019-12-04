@@ -12,16 +12,16 @@ fn step(mem: &mut [i32], ip: &mut usize) -> Result<bool, util::Error> {
             mem[mem[*ip + 3] as usize] = mem[mem[*ip + 1] as usize] * mem[mem[*ip + 2] as usize];
             *ip += 4;
         }
-        99 => return Result::Ok(false),
-        _ => return Result::Err(util::Error),
+        99 => return Ok(false),
+        _ => return Err(util::Error),
     }
-    return Result::Ok(true);
+    return Ok(true);
 }
 
 fn run(mem: &mut [i32]) -> Result<(), util::Error> {
     let mut ip: usize = 0;
     while step(mem, &mut ip)? {}
-    return Result::Ok(());
+    return Ok(());
 }
 
 pub fn part1<'a, I, S>(lines: I) -> Result<i32, Box<dyn error::Error + Send + Sync>>
@@ -37,7 +37,7 @@ where
     mem[1] = 12;
     mem[2] = 2;
     run(&mut mem)?;
-    return Result::Ok(mem[0]);
+    return Ok(mem[0]);
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<i32, Box<dyn error::Error + Send + Sync>>
@@ -57,9 +57,9 @@ where
             mem[2] = verb;
             run(&mut mem)?;
             if mem[0] == 19690720 {
-                return Result::Ok(100 * noun + verb);
+                return Ok(100 * noun + verb);
             }
         }
     }
-    return Result::Err(Box::new(util::Error));
+    return Err(Box::new(util::Error));
 }

@@ -34,5 +34,5 @@ fn main() -> io::Result<()> {
         );
     }
     consts.finish();
-    return Result::Ok(());
+    return Ok(());
 }

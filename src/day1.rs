@@ -18,7 +18,7 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    Result::Ok(i32::sum(util::parse_many(lines)?.iter().map(fuel)))
+    Ok(i32::sum(util::parse_many(lines)?.iter().map(fuel)))
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<i32, Box<dyn Error + Send + Sync>>
@@ -26,5 +26,5 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    Result::Ok(i32::sum(util::parse_many(lines)?.iter().map(fuels)))
+    Ok(i32::sum(util::parse_many(lines)?.iter().map(fuels)))
 }
