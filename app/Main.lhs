@@ -61,6 +61,10 @@ import Day2 (day2a, day2b)
 ```haskell
 import Day3 (day3a, day3b)
 ```
+## [Day 4: Secure Container](/src/Day4.hs)
+```haskell
+import Day4 (day4a, day4b)
+```
 
 ---
 
@@ -97,4 +101,5 @@ main = do
     run 1 getDayInput print [day1a, day1b]
     run 2 getDayInput print [day2a, day2b]
     run 3 getDayInput (putStrLn . showError (maybeBottom show)) [day3a, day3b]
+    run 4 getDayInput (putStrLn . showError show) [day4a, day4b]
 ```
