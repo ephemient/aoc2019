@@ -2,7 +2,7 @@ import fileinput
 
 
 def fuel(weight):
-    return weight // 3 - 2
+    return max(weight // 3 - 2, 0)
 
 
 def fuels(weight):
