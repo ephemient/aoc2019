@@ -1,6 +1,5 @@
 use super::util;
 use std::error;
-use std::num::ParseIntError;
 
 fn step(mem: &mut [i32], ip: &mut usize) -> Result<bool, util::Error> {
     match mem[*ip] {
@@ -30,10 +29,8 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mut mem = line
-        .split(',')
-        .map(|s| s.parse::<i32>())
-        .collect::<Result<Vec<i32>, ParseIntError>>()?;
+    let mut mem: Vec<i32> =
+        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     mem[1] = 12;
     mem[2] = 2;
     run(&mut mem)?;
@@ -46,10 +43,8 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mem0 = line
-        .split(',')
-        .map(|s| s.parse::<i32>())
-        .collect::<Result<Vec<i32>, ParseIntError>>()?;
+    let mem0: Vec<i32> =
+        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     for noun in 0..99 {
         for verb in 0..99 {
             let mut mem = mem0.clone();
