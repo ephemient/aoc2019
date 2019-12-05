@@ -2,32 +2,33 @@
 Module:         Day3
 Description:    <https://adventofcode.com/2019/day/3 Day 3: Crossed Wires>
 -}
-{-# LANGUAGE FlexibleContexts, TypeApplications, TypeFamilies, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, TypeApplications, TypeFamilies #-}
 module Day3 (day3a, day3b) where
 
 import Control.Arrow (first, second)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map (elems, empty, keysSet, insertWith, intersectionWith)
+import Data.Map.Lazy (Map)
+import qualified Data.Map.Lazy as Map (elems, fromDistinctAscList, fromDistinctDescList, keysSet, intersectionWith, unionsWith)
 import Data.Functor (($>))
-import Data.List (foldl', foldl1')
+import Data.List (foldl1', mapAccumL)
 import Data.Maybe (mapMaybe)
 import Data.List.NonEmpty (nonEmpty)
 import qualified Data.Set as Set (intersection, lookupMin, map, unions)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, choice, option, parse, sepEndBy)
+import Text.Megaparsec (MonadParsec, ParseErrorBundle, choice, parse, sepBy, sepEndBy)
 import Text.Megaparsec.Char (char, space1)
 import Text.Megaparsec.Char.Lexer (decimal)
 
-parser :: (Integral a, MonadParsec e String m, Show a) => m [Map (a, a) Int]
-parser = line Map.empty (0, 0) 1 `sepEndBy` space1 where
-    dir = choice $ zipWith (($>) . char) "ULDR"
-        [second succ, first pred, second pred, first succ]
-    line m p d = do
-        f <- dir
-        n <- decimal
-        let points@(last -> p') = take n . tail $ iterate f p
-            m' = foldl' (flip . uncurry . Map.insertWith $ flip const) m $
-                zip points [d..]
-        option m' $ char ',' *> line m' p' (d + n)
+parser :: (Integral a, MonadParsec e String m, Show a) => m [Map (a, a) a]
+parser = line `sepEndBy` space1 where
+    line = Map.unionsWith const . snd . mapAccumL walk ((0, 0), 0) <$> segments
+    segments = ((,) <$> dir <*> decimal) `sepBy` char ','
+    dir = choice
+      [ char 'U' $> (Map.fromDistinctAscList, second . (+))
+      , char 'L' $> (Map.fromDistinctDescList, first . subtract)
+      , char 'D' $> (Map.fromDistinctDescList, second . subtract)
+      , char 'R' $> (Map.fromDistinctAscList, first . (+))
+      ]
+    walk (p, d) ((fromList, go), n) =
+        ((go n p, d + n), fromList [(go i p, d + i) | i <- [1..n]])
 
 choose :: Int -> [a] -> [[a]]
 choose 0 _ = [[]]
