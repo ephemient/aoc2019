@@ -65,6 +65,10 @@ import Day3 (day3a, day3b)
 ```haskell
 import Day4 (day4a, day4b)
 ```
+## [Day 5: Sunny with a Chance of Asteroids](/src/Day5.hs)
+```haskell
+import Day5 (day5a, day5b)
+```
 
 ---
 
@@ -99,4 +103,5 @@ main = do
     run 2 print [day2a, day2b]
     run 3 (putStrLn . showError (maybeBottom show)) [day3a, day3b]
     run 4 (putStrLn . showError show) [day4a, day4b]
+    run 5 (putStrLn . maybeBottom show) [day5a, day5b]
 ```
