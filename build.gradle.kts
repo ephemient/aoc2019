@@ -28,7 +28,9 @@ dependencies {
     implementation("com.google.guava:guava:$guavaVersion")
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.google.truth:truth:$truthVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
     jmhImplementation(kotlin("reflect"))
     jmhImplementation(kotlin("stdlib-jdk8"))
 }
