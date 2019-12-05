@@ -10,6 +10,7 @@ mod day1;
 mod day2;
 mod day3;
 mod day4;
+mod day5;
 mod util;
 
 build_const!("aoc2019.rs");
@@ -46,6 +47,13 @@ fn main() -> io::Result<()> {
         println!("Day 4");
         println!("{:?}", day4::part1(DAY4).map_err(util::to_ioerror)?);
         println!("{:?}", day4::part2(DAY4).map_err(util::to_ioerror)?);
+        println!();
+    }
+
+    if args.is_empty() || args.contains("5") {
+        println!("Day 5");
+        println!("{:?}", day5::part1(DAY5).map_err(util::to_ioerror)?);
+        println!("{:?}", day5::part2(DAY5).map_err(util::to_ioerror)?);
         println!();
     }
 
