@@ -27,7 +27,6 @@ library:
   dependencies:
   - array
   - containers
-  - fgl
   - megaparsec
 
 executables:

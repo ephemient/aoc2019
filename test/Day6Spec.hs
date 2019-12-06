@@ -20,7 +20,7 @@ spec = do
               , "J)K"
               , "K)L"
               ]
-            ) `shouldBe` Right 42
+            ) `shouldBe` Just 42
     describe "part 2" $
         it "examples" $
             day6b (unlines
@@ -38,4 +38,4 @@ spec = do
               , "K)YOU"
               , "I)SAN"
               ]
-            ) `shouldBe` Right (Just 4)
+            ) `shouldBe` Just 4
