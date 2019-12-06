@@ -20,7 +20,7 @@ fn ioerror() -> io::Error {
 }
 
 fn main() -> io::Result<()> {
-    let args: HashSet<String> = HashSet::from_iter(env::args().skip(1));
+    let args: HashSet<_> = HashSet::from_iter(env::args().skip(1));
 
     if args.is_empty() || args.contains("1") {
         println!("Day 1");

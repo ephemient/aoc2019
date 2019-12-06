@@ -19,7 +19,7 @@ fn to_points(input: &str) -> impl Iterator<Item = (i32, i32)> + '_ {
                         p.1 += step.1;
                         return Some(p.clone());
                     })
-                    .collect::<Vec<(i32, i32)>>(),
+                    .collect::<Vec<_>>(),
             );
         })
         .flatten()

@@ -34,5 +34,5 @@ where
     Ok(lines
         .into_iter()
         .map(|s| s.as_ref().parse::<F>())
-        .collect::<Result<Vec<F>, <F as FromStr>::Err>>()?)
+        .collect::<Result<_, _>>()?)
 }
