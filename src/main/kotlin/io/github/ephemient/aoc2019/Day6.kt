@@ -7,10 +7,9 @@ class Day6(private val lines: List<String>) {
             valueTransform = { it.substringAfter(')') }
         )
         val checksums = mutableMapOf<String, Int>()
-        fun checksum(name: String): Int = orbits[name]?.sumBy {
-            checksum(it) + 1
-        } ?: 0
-        return orbits.keys.union(orbits.values.flatten()).sumBy { checksum(it) }
+        fun checksum(name: String): Int = checksums[name]
+            ?: orbits[name].orEmpty().sumBy { checksum(it) + 1 }.also { checksums[name] = it }
+        return orbits.keys.sumBy { checksum(it) }
     }
 
     fun part2(): Int {

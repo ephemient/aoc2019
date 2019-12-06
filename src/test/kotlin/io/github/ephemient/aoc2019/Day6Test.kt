@@ -9,19 +9,19 @@ class Day6Test {
         assertEquals(
             42,
             Day6(
-                listOf(
-                    "COM)B",
-                    "B)C",
-                    "C)D",
-                    "D)E",
-                    "E)F",
-                    "B)G",
-                    "G)H",
-                    "D)I",
-                    "E)J",
-                    "J)K",
-                    "K)L"
-                )
+                """
+                COM)B
+                B)C
+                C)D
+                D)E
+                E)F
+                B)G
+                G)H
+                D)I
+                E)J
+                J)K
+                K)L
+                """.trimIndent().lines()
             ).part1()
         )
     }
@@ -31,21 +31,21 @@ class Day6Test {
         assertEquals(
             4,
             Day6(
-                listOf(
-                    "COM)B",
-                    "B)C",
-                    "C)D",
-                    "D)E",
-                    "E)F",
-                    "B)G",
-                    "G)H",
-                    "D)I",
-                    "E)J",
-                    "J)K",
-                    "K)L",
-                    "K)YOU",
-                    "I)SAN"
-                )
+                """
+                COM)B
+                B)C
+                C)D
+                D)E
+                E)F
+                B)G
+                G)H
+                D)I
+                E)J
+                J)K
+                K)L
+                K)YOU
+                I)SAN
+                """.trimIndent().lines()
             ).part2()
         )
     }
