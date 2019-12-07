@@ -7,11 +7,14 @@ class Day5(lines: List<String>) {
     private val ints: List<Int> =
         lines.first().splitToSequence(",").map { it.toInt() }.toList()
 
-    fun part1(): Int? = Computer(ints.toIntArray()).run(listOf(1)).lastOrNull()
+    fun part1(): Int? = mutableListOf<Int>().apply {
+        Computer(ints.toIntArray()).run({ 1 }, { add(it) })
+    }.lastOrNull()
 
-    fun part2(): Int? = Computer(ints.toIntArray()).run(listOf(5)).lastOrNull()
+    fun part2(): Int? = mutableListOf<Int>().apply {
+        Computer(ints.toIntArray()).run({ 5 }, { add(it) })
+    }.lastOrNull()
 
-    @VisibleForTesting
     class Computer(private val mem: IntArray) {
         private operator fun IntArray.get(ip: Int, n: Int): Int =
             if (this[ip] / IntMath.pow(10, n + 1) % 10 == 0) {
@@ -30,7 +33,7 @@ class Day5(lines: List<String>) {
 
         @Suppress("ComplexMethod")
         @VisibleForTesting
-        fun step(ip: Int, inputIterator: Iterator<Int>, output: MutableCollection<Int>): Int? =
+        fun step(ip: Int, input: () -> Int, output: (Int) -> Unit): Int? =
             when (mem[ip] % 100) {
                 1 -> {
                     mem[ip, 3] = mem[ip, 1] + mem[ip, 2]
@@ -41,11 +44,11 @@ class Day5(lines: List<String>) {
                     ip + 4
                 }
                 3 -> {
-                    mem[ip, 1] = inputIterator.next()
+                    mem[ip, 1] = input()
                     ip + 2
                 }
                 4 -> {
-                    output.add(mem[ip, 1])
+                    output(mem[ip, 1])
                     ip + 2
                 }
                 5 -> if (mem[ip, 1] != 0) mem[ip, 2] else ip + 3
@@ -62,15 +65,11 @@ class Day5(lines: List<String>) {
                 else -> error("unhandled opcode ${mem[ip]}")
             }
 
-        @VisibleForTesting
-        fun run(input: Iterable<Int>): List<Int> {
-            val inputIterator = input.iterator()
-            val output = mutableListOf<Int>()
+        fun run(input: () -> Int, output: (Int) -> Unit) {
             var ip: Int? = 0
             while (ip != null) {
-                ip = step(ip, inputIterator, output)
+                ip = step(ip, input, output)
             }
-            return output
         }
     }
 }
