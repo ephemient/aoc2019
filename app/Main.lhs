@@ -73,6 +73,10 @@ import Day5 (day5a, day5b)
 ```haskell
 import Day6 (day6a, day6b)
 ```
+## [Day 7: Amplification Circuit](/src/Day7.hs)
+```haskell
+import Day7 (day7a, day7b)
+```
 
 ---
 
@@ -109,4 +113,5 @@ main = do
     run 4 (putStrLn . showError show) [day4a, day4b]
     run 5 (putStrLn . maybeBottom show) [day5a, day5b]
     run 6 (putStrLn . maybeBottom show) [day6a, day6b]
+    run 7 (>>= putStrLn . maybeBottom show) [day7a, day7b]
 ```

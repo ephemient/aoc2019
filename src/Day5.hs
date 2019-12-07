@@ -3,7 +3,7 @@ Module:         Day5
 Description:    <https://adventofcode.com/2019/day/5 Day 5: Sunny with a Chance of Asteroids>
 -}
 {-# LANGUAGE FlexibleContexts, LambdaCase, ScopedTypeVariables, TypeApplications #-}
-module Day5 (day5a, day5b, run, step) where
+module Day5 (day5a, day5b, parser, run, step) where
 
 import Control.Monad.ST (ST, runST)
 import Data.Array.ST (MArray, STUArray, readArray, thaw, writeArray)
