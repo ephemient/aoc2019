@@ -113,5 +113,5 @@ main = do
     run 4 (putStrLn . showError show) [day4a, day4b]
     run 5 (putStrLn . maybeBottom show) [day5a, day5b]
     run 6 (putStrLn . maybeBottom show) [day6a, day6b]
-    run 7 (>>= putStrLn . maybeBottom show) [day7a, day7b]
+    run 7 (putStrLn . showError (maybeBottom show)) [day7a, day7b]
 ```

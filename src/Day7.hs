@@ -2,47 +2,42 @@
 Module:         Day7
 Description:    <https://adventofcode.com/2019/day/7 Day 7: Amplification Circuit>
 -}
-{-# LANGUAGE AllowAmbiguousTypes, FlexibleContexts, ScopedTypeVariables, TypeApplications, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, TypeApplications, ViewPatterns #-}
 module Day7 (amplify, day7a, day7b) where
 
-import Control.Concurrent (forkIO, newChan, newEmptyMVar, putMVar, readChan, takeMVar, writeChan)
-import Control.Monad (foldM)
-import Data.Array.IO (IOUArray, MArray, thaw)
-import Data.Array.Unboxed (IArray, UArray)
-import Data.IORef (newIORef, readIORef, writeIORef)
-import Data.Ix (Ix)
-import Data.List (permutations)
-import Day5 (parser, run)
-import Text.Megaparsec (parseMaybe)
+import Control.Monad.State (evalState, gets, modify)
+import Data.Array.Unboxed (IArray, Ix, UArray, (!), (//), listArray)
+import Data.List (foldl', permutations)
+import qualified Data.List.NonEmpty as NonEmpty (last)
+import Data.List.NonEmpty (nonEmpty)
+import Intcode (Memory(..), run)
+import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
+import Text.Megaparsec.Char (char, space)
+import Text.Megaparsec.Char.Lexer (signed, decimal)
 
-amplify :: forall a b e i. (IArray a e, MArray b e IO, Integral e, Ix i, Num i) =>
-    a i e -> [e] -> IO (Maybe e)
-amplify mem0 order = do
-    chans <- mapM (const newChan) order
-    let start n input output = do
-            mem <- thaw @i @a @e @b mem0
-            done <- newEmptyMVar
-            _ <- forkIO $ do
-                lastOutput <- newIORef Nothing
-                let writeAndLog x = do
-                        writeIORef lastOutput $ Just x
-                        writeChan output x
-                run (readChan input) writeAndLog mem
-                readIORef lastOutput >>= putMVar done
-            writeChan input n
-            return done
-    dones <- sequence $ zipWith3 start order chans $ drop 1 $ cycle chans
-    writeChan (head chans) 0
-    takeMVar $ last dones
+parser :: (IArray a e, Integral e, MonadParsec err String m) => m (a Int e)
+parser = do
+    ints <- signed (return ()) decimal `sepBy` char ',' <* space
+    return $ listArray (0, length ints - 1) ints
 
-day7a :: String -> IO (Maybe Int)
-day7a (parseMaybe @() parser -> Just mem) =
-    foldM (\a -> fmap (max a) . amplify @UArray @IOUArray mem) Nothing $
-    permutations [0..4]
-day7a _ = return Nothing
+amplify :: (IArray a e, Integral e, Ix i, Num i) => a i e -> [e] -> Maybe e
+amplify mem (o:os) = NonEmpty.last <$> nonEmpty final where
+    run' inject input = flip evalState mem $ do
+        let memory = Memory
+              { readMem = \n -> gets (! n)
+              , writeMem = \n v -> modify (// [(n, v)])
+              }
+        run memory $ inject ++ input
+    injects = [o, 0] : map (:[]) os
+    amps@(last -> final) = zipWith run' injects $ final : amps
+amplify _ _ = Nothing
 
-day7b :: String -> IO (Maybe Int)
-day7b (parseMaybe @() parser -> Just mem) =
-    foldM (\a -> fmap (max a) . amplify @UArray @IOUArray mem) Nothing $
-    permutations [5..9]
-day7b _ = return Nothing
+day7a :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day7a input = do
+    mem <- parse (parser @UArray) "" input
+    return $ foldl' max Nothing $ amplify mem <$> permutations [0..4]
+
+day7b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day7b input = do
+    mem <- parse (parser @UArray) "" input
+    return $ foldl' max Nothing $ amplify mem <$> permutations [5..9]

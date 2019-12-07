@@ -2,15 +2,15 @@
 Module:         Day2
 Description:    <https://adventofcode.com/2019/day/2 Day 2: 1202 Program Alarm>
 -}
-{-# LANGUAGE FlexibleContexts, LambdaCase, NamedFieldPuns, NoMonomorphismRestriction, RecordWildCards, ScopedTypeVariables, TypeApplications #-}
-module Day2 (day2a, day2b, run, step) where
+{-# LANGUAGE FlexibleContexts, NamedFieldPuns, RecordWildCards, TypeApplications #-}
+module Day2 (day2a, day2b) where
 
-import Control.Monad (liftM2, unless)
+import Control.Monad (unless)
 import Control.Monad.ST (ST, runST)
-import Data.Array.ST (MArray, STArray, STUArray, readArray, thaw, writeArray)
+import Data.Array.ST (STArray, STUArray, readArray, thaw, writeArray)
 import Data.Array.Unboxed (Array, IArray, UArray, listArray)
-import Data.Function (on)
-import Data.Ix (Ix, inRange)
+import Data.Ix (inRange)
+import Intcode (Memory(..), run)
 import Text.Megaparsec (MonadParsec, parse, sepBy)
 import Text.Megaparsec.Char (char, space)
 import Text.Megaparsec.Char.Lexer (decimal)
@@ -20,36 +20,15 @@ parser = do
     ints <- decimal `sepBy` char ',' <* space
     return $ listArray (0, length ints - 1) ints
 
-step :: (Monad m, MArray a e m, Integral e, Ix i, Num i) =>
-    a i e -> i -> m (Maybe i)
-step mem ip = readArray mem ip >>= \case
-    1 -> binOp (+)
-    2 -> binOp (*)
-    99 -> pure Nothing
-    _ -> fail "bad opcode"
-  where
-    binOp f = do
-        i <- fromIntegral <$> readArray mem (ip + 1)
-        j <- fromIntegral <$> readArray mem (ip + 2)
-        o <- fromIntegral <$> readArray mem (ip + 3)
-        (liftM2 f `on` readArray mem) i j >>= writeArray mem o
-        return . Just $ ip + 4
-
-run :: (Monad m, MArray a e m, Integral e, Ix i, Num i) => a i e -> m ()
-run mem = loop (Just 0)
-  where
-    loop Nothing = return ()
-    loop (Just ip) = step mem ip >>= loop
-
 day2a :: String -> Int
 day2a input = runST $ do
     mem <- parseST input
     writeArray mem 1 12
     writeArray mem 2 2
-    run mem
+    [] <- run Memory { readMem = readArray mem, writeMem = writeArray mem } []
     readArray mem 0
   where
-    parseST :: forall s. String -> ST s (STUArray s Int Int)
+    parseST :: String -> ST s (STUArray s Int Int)
     parseST = either (fail . show) thaw . parse (parser @UArray @Int @()) ""
 
 data XY i = XY {x :: !i, y :: !i, c :: !i} | XYError
@@ -91,12 +70,12 @@ day2b input = runST $ do
     mem <- parseST input
     writeArray mem 1 $ XY 1 0 0
     writeArray mem 2 $ XY 0 1 0
-    run mem
+    [] <- run Memory { readMem = readArray mem, writeMem = writeArray mem } []
     XY {x = m, y = n, c} <- readArray mem 0
     unless (n == 1) $ fail "unhandled"
     let (x, y) = (19690720 - c) `quotRem` m
     unless (inRange (0, 99) x && inRange (0, 99) y) $ fail "unexpected"
     return $ 100 * x + y
   where
-    parseST :: forall s. String -> ST s (STArray s Int (XY Int))
+    parseST :: String -> ST s (STArray s Int (XY Int))
     parseST = either (fail . show) thaw . parse (parser @Array @(XY Int) @()) ""
