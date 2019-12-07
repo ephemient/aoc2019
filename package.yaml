@@ -43,6 +43,17 @@ executables:
     dependencies:
     - aoc2019
     - markdown-unlit
+  day6-gen:
+    main:                Main.hs
+    source-dirs:         day6-gen
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - '"-with-rtsopts=-N -qg"'
+    - -pgmL markdown-unlit
+    dependencies:
+    - containers
+    - random
 
 data-files:
 - day*.txt
