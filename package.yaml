@@ -29,6 +29,7 @@ library:
   - containers
   - megaparsec
   - mtl
+  - split
 
 executables:
   aoc2019-exe:

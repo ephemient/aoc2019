@@ -77,6 +77,10 @@ import Day6 (day6a, day6b)
 ```haskell
 import Day7 (day7a, day7b)
 ```
+## [Day 8: Space Image Format](/src/Day8.hs)
+```haskell
+import Day8 (day8a, day8b)
+```
 
 ---
 
@@ -114,4 +118,5 @@ main = do
     run 5 (putStrLn . maybeBottom show) [day5a, day5b]
     run 6 (putStrLn . maybeBottom show) [day6a, day6b]
     run 7 (putStrLn . showError (maybeBottom show)) [day7a, day7b]
+    run 8 putStrLn [show . day8a 25 6, day8b 25 6]
 ```
