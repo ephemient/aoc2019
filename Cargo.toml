@@ -15,3 +15,5 @@ build_const = "0.1"
 [dependencies]
 build_const = "0.1"
 collecting-hashmap = "0.2"
+crossbeam-channel = "0.4"
+itertools = "0.8"

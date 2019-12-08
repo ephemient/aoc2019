@@ -3,12 +3,12 @@ use std::error;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-struct Error {
+pub struct Error {
     msg: String,
 }
 
 impl Error {
-    fn new(msg: String) -> Error {
+    pub fn new(msg: String) -> Error {
         Error { msg: msg }
     }
 }
@@ -25,16 +25,17 @@ impl error::Error for Error {
     }
 }
 
-fn step<I, O>(mem: &mut [i32], ip: &mut usize, input: &mut I, output: &mut O) -> Result<bool, Error>
+fn step<I, O, E>(mem: &mut [i32], ip: &mut usize, input: &mut I, output: &mut O) -> Result<bool, E>
 where
-    I: FnMut() -> i32,
-    O: FnMut(i32),
+    I: FnMut() -> Result<i32, E>,
+    O: FnMut(i32) -> Result<(), E>,
+    E: From<Error>,
 {
     let op = mem[*ip];
     let arg = |n: u32| -> usize {
         match op / 10i32.pow(n + 1) % 10 {
             0 => mem[*ip + n as usize] as usize,
-            _ => *ip + n as usize
+            _ => *ip + n as usize,
         }
     };
     match op % 100 {
@@ -47,11 +48,11 @@ where
             *ip += 4;
         }
         3 => {
-            mem[arg(1)] = input();
+            mem[arg(1)] = input()?;
             *ip += 2;
         }
         4 => {
-            output(mem[arg(1)]);
+            output(mem[arg(1)])?;
             *ip += 2;
         }
         5 => {
@@ -75,15 +76,16 @@ where
             *ip = *ip + 4;
         }
         99 => return Ok(false),
-        _ => return Err(Error::new(format!("bad opcode: {}", op))),
+        _ => return Err(Error::new(format!("bad opcode: {}", op)).into()),
     }
     return Ok(true);
 }
 
-fn run<I, O>(mem: &mut [i32], mut input: I, mut output: O) -> Result<(), Error>
+pub fn run<I, O, E>(mem: &mut [i32], mut input: I, mut output: O) -> Result<(), E>
 where
-    I: FnMut() -> i32,
-    O: FnMut(i32),
+    I: FnMut() -> Result<i32, E>,
+    O: FnMut(i32) -> Result<(), E>,
+    E: From<Error>,
 {
     let mut ip: usize = 0;
     while step(mem, &mut ip, &mut input, &mut output)? {}
@@ -99,7 +101,14 @@ where
     let mut mem: Vec<i32> =
         util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     let mut output: Option<i32> = None;
-    run(&mut mem, || 1, |value| output = Some(value))?;
+    run::<_, _, Error>(
+        &mut mem,
+        || Ok(1),
+        |value| {
+            output = Some(value);
+            Ok(())
+        },
+    )?;
     return Ok(output.ok_or_else(|| Error::new("no output".to_string()))?);
 }
 
@@ -112,6 +121,13 @@ where
     let mut mem: Vec<i32> =
         util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     let mut output: Option<i32> = None;
-    run(&mut mem, || 5, |value| output = Some(value))?;
+    run::<_, _, Error>(
+        &mut mem,
+        || Ok(5),
+        |value| {
+            output = Some(value);
+            Ok(())
+        },
+    )?;
     return Ok(output.ok_or_else(|| Error::new("no output".to_string()))?);
 }
