@@ -22,12 +22,15 @@ defaultTasks = listOf("check", "run")
 dependencies {
     val guavaVersion: String by project
     val junitVersion: String by project
+    val kotlinxCoroutinesVersion: String by project
     val truthVersion: String by project
 
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.google.guava:guava:$guavaVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion")
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.google.truth:truth:$truthVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
