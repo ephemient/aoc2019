@@ -1,11 +1,12 @@
 plugins {
-    id("io.gitlab.arturbosch.detekt")
-    id("org.jetbrains.dokka")
-    kotlin("jvm")
-    id("org.jmailen.kotlinter")
-    id("me.champeau.gradle.jmh")
-    id("com.github.ben-manes.versions")
     application
+    id("com.github.ben-manes.versions")
+    id("com.github.johnrengelman.shadow")
+    id("io.gitlab.arturbosch.detekt")
+    id("me.champeau.gradle.jmh")
+    id("org.jetbrains.dokka")
+    id("org.jmailen.kotlinter")
+    kotlin("jvm")
     `maven-publish`
 }
 repositories {
@@ -15,6 +16,12 @@ repositories {
 application {
     mainClassName = "io.github.ephemient.aoc2019.MainKt"
     //applicationDefaultJvmArgs = listOf("-Xmx3072m")
+}
+
+val jar by tasks.getting(Jar::class) {
+    manifest {
+        attributes["Main-Class"] = "io.github.ephemient.aoc2019.MainKt"
+    }
 }
  
 defaultTasks = listOf("check", "run")
