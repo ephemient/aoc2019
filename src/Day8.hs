@@ -38,5 +38,5 @@ day8a width height input = count White chunk * count Transparent chunk where
         mapMaybe parse input
 
 day8b :: Int -> Int -> String -> String
-day8b width height = intercalate "\n" . map (`showList` "") . chunksOf width .
+day8b width height = intercalate "\n" . map show . chunksOf width .
     map mconcat . transpose . chunksOf (width * height) . mapMaybe parse
