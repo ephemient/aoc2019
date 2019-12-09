@@ -4,6 +4,7 @@
 module IntcodeSpec (spec) where
 
 import Data.Array.IO (IOUArray, getElems, newListArray, readArray, writeArray)
+import Data.IORef (modifyIORef', newIORef, readIORef)
 import Intcode (Memory(..))
 import qualified Intcode (run)
 import Test.Hspec (Spec, describe, it, shouldReturn)
@@ -12,11 +13,13 @@ import Test.QuickCheck.Monadic (monadicIO, pick, run)
 
 runMem :: [Int] -> IO [Int]
 runMem ints = do
-    mem <- newListArray @IOUArray @Int @IO @Int (0, length ints - 1)
-        ints
+    mem <- newListArray @IOUArray @Int @IO @Int (0, length ints - 1) ints
+    base <- newIORef 0
     let memory = Memory
           { readMem = readArray mem
           , writeMem = writeArray mem
+          , readBase = readIORef base
+          , modifyBase = modifyIORef' base
           }
     Intcode.run memory [] `shouldReturn` []
     getElems mem
@@ -24,7 +27,13 @@ runMem ints = do
 compile :: [Int] -> [Int] -> IO [Int]
 compile code input = do
     mem <- newListArray @IOUArray (0, length code - 1) code
-    let memory = Memory { readMem = readArray mem, writeMem = writeArray mem }
+    base <- newIORef 0
+    let memory = Memory
+          { readMem = readArray mem
+          , writeMem = writeArray mem
+          , readBase = readIORef base
+          , modifyBase = modifyIORef' base
+          }
     Intcode.run memory input
 
 spec :: Spec
@@ -95,3 +104,13 @@ spec = do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [999 + fromEnum (compare x 8)]
+    describe "day 9 part 1" $
+        it "example 1" $ do
+            let quine =
+                  [ 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006
+                  , 101, 0, 99 ]
+            compile (quine ++ replicate 86 0) [] `shouldReturn` quine
+            compile [1102, 34915192, 34915192, 7, 4, 7, 99, 0] []
+                `shouldReturn` [1219070632396864]
+            compile [104, 1125899906842624, 99] [] `shouldReturn`
+                [1125899906842624]

@@ -81,6 +81,10 @@ import Day7 (day7a, day7b)
 ```haskell
 import Day8 (day8a, day8b)
 ```
+## [Day 9: Sensor Boost](/src/Day9.hs)
+```haskell
+import Day9 (day9a, day9b)
+```
 
 ---
 
@@ -119,4 +123,5 @@ main = do
     run 6 (putStrLn . maybeBottom show) [day6a, day6b]
     run 7 (putStrLn . showError (maybeBottom show)) [day7a, day7b]
     run 8 putStrLn [show . day8a 25 6, day8b 25 6]
+    run 9 (putStrLn . showError (maybeBottom show)) [day9a, day9b]
 ```

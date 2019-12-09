@@ -1,9 +1,12 @@
 {-# LANGUAGE LambdaCase, NamedFieldPuns, RecordWildCards #-}
-module Intcode (Memory(..), Context(..), run, runLast, step) where
+module Intcode (Memory(..), Context(..), run, step) where
 
-import Control.Monad.State (execStateT, lift, put)
-
-data Memory m e i = Memory { readMem :: i -> m e, writeMem :: i -> e -> m () }
+data Memory m e i = Memory
+  { readMem :: i -> m e
+  , writeMem :: i -> e -> m ()
+  , readBase :: m i
+  , modifyBase :: (i -> i) -> m ()
+  }
 
 data Context m e i a = Context
   { next :: [e] -> i -> m a
@@ -19,23 +22,16 @@ run memory = flip next 0 where
       , terminate = return []
       }
 
-runLast :: (Monad m, Integral e, Num i) => Memory m e i -> [e] -> m (Maybe e)
-runLast Memory {..} = flip execStateT Nothing . flip next 0 where
-    memory = Memory { readMem = lift . readMem, writeMem = (lift .) . writeMem }
-    context@Context {next} = Context
-      { next = step memory context
-      , output = \e input ip -> put (Just e) >> next input ip
-      , terminate = return ()
-      }
-
 step :: (Monad m, Integral e, Num i) =>
     Memory m e i -> Context m e i a -> [e] -> i -> m a
 step Memory {..} Context {..} input ip = do
     op <- readMem ip
-    let arg n
-          | op `quot` 10 ^ (n + 1 :: Int) `rem` 10 == 0
-          = fromIntegral <$> readMem (ip + fromIntegral n)
-          | otherwise = return $ ip + fromIntegral n
+    let arg n = case op `quot` 10 ^ (n + 1 :: Int) `rem` 10 of
+            0 -> fromIntegral <$> readMem (ip + fromIntegral n)
+            1 -> return $ ip + fromIntegral n
+            2 -> (+) <$> readBase <*>
+                (fromIntegral <$> readMem (ip + fromIntegral n))
+            _ -> fail "bad mode"
         getArg n = arg n >>= readMem
         putArg n v = arg n >>= flip writeMem v
         binOp f = do
@@ -54,5 +50,8 @@ step Memory {..} Context {..} input ip = do
         6 -> jmp (== 0)
         7 -> binOp $ \x y -> if x < y then 1 else 0
         8 -> binOp $ \x y -> if x == y then 1 else 0
+        9 -> do
+            getArg 1 >>= modifyBase . (+) . fromIntegral
+            next input $ ip + 2
         99 -> terminate
         _ -> fail "bad opcode"

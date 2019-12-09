@@ -3,6 +3,7 @@ Module:         Day2
 Description:    <https://adventofcode.com/2019/day/2 Day 2: 1202 Program Alarm>
 -}
 {-# LANGUAGE FlexibleContexts, NamedFieldPuns, RecordWildCards, TypeApplications #-}
+{-# OPTIONS_GHC -Wno-missing-fields #-}
 module Day2 (day2a, day2b) where
 
 import Control.Monad (unless)

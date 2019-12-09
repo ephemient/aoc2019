@@ -3,6 +3,7 @@ Module:         Day7
 Description:    <https://adventofcode.com/2019/day/7 Day 7: Amplification Circuit>
 -}
 {-# LANGUAGE AllowAmbiguousTypes, FlexibleContexts, RecordWildCards, ScopedTypeVariables, TypeApplications #-}
+{-# OPTIONS_GHC -Wno-missing-fields #-}
 module Day7 (day7a, day7b, maxAmplify) where
 
 import Control.Monad.ST (ST, runST)
