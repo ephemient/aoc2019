@@ -28,6 +28,7 @@ library:
   - array
   - containers
   - megaparsec
+  - primitive
   - split
   - vector
 
@@ -73,6 +74,7 @@ tests:
     - aoc2019
     - array
     - hspec
+    - vector
 
 benchmarks:
   aoc2019-bench:

@@ -116,10 +116,10 @@ run day showIO funcs = do
 main :: IO ()
 main = do
     run 1 print [day1a, day1b]
-    run 2 print [day2a, day2b]
+    run 2 (putStrLn . showError show) [day2a, day2b]
     run 3 (putStrLn . showError (maybeBottom show)) [day3a, day3b]
     run 4 (putStrLn . showError show) [day4a, day4b]
-    run 5 (putStrLn . maybeBottom show) [day5a, day5b]
+    run 5 (putStrLn . showError (maybeBottom show)) [day5a, day5b]
     run 6 (putStrLn . maybeBottom show) [day6a, day6b]
     run 7 (putStrLn . showError (maybeBottom show)) [day7a, day7b]
     run 8 putStrLn [show . day8a 25 6, day8b 25 6]

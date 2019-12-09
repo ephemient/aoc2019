@@ -11,11 +11,9 @@ data Context m e i a = Context
 
 run :: (Monad m, Integral e, Num i) => Memory m e i -> [e] -> m [e]
 run memory = flip next 0 `flip` 0 where
-    context@Context {next} = Context
-      { next = step memory context
-      , output = \e input base ip -> (e:) <$> next input base ip
-      , terminate = const . const $ return []
-      }
+    next = step memory Context {..}
+    output e input base ip = (e:) <$> next input base ip
+    terminate _ _ = return []
 
 step :: (Monad m, Integral e, Num i) =>
     Memory m e i -> Context m e i a -> [e] -> i -> i -> m a

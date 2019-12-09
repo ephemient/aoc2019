@@ -10,8 +10,8 @@ import Control.Monad.ST (ST, runST)
 import Data.Array.ST (STArray, STUArray, readArray, thaw, writeArray)
 import Data.Array.Unboxed (Array, IArray, UArray, listArray)
 import Data.Ix (inRange)
-import Intcode (Memory(..), run)
-import Text.Megaparsec (MonadParsec, parse, sepBy)
+import Intcode.Array (run)
+import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char, space)
 import Text.Megaparsec.Char.Lexer (decimal)
 
@@ -20,16 +20,16 @@ parser = do
     ints <- decimal `sepBy` char ',' <* space
     return $ listArray (0, length ints - 1) ints
 
-day2a :: String -> Int
-day2a input = runST $ do
-    mem <- parseST input
-    writeArray mem 1 12
-    writeArray mem 2 2
-    [] <- run Memory { readMem = readArray mem, writeMem = writeArray mem } []
-    readArray mem 0
-  where
-    parseST :: String -> ST s (STUArray s Int Int)
-    parseST = either (fail . show) thaw . parse (parser @UArray @Int @()) ""
+day2a :: String -> Either (ParseErrorBundle String ()) Int
+day2a input = do
+    mem0 <- parse (parser @UArray) "" input
+    return $ runST $ do
+        mem <- thaw mem0
+        writeArray mem 1 12
+        writeArray mem 2 2
+        [] <- run' mem []
+        readArray mem 0
+  where run' = run :: STUArray s Int Int -> [Int] -> ST s [Int]
 
 data XY i = XY {x :: !i, y :: !i, c :: !i} | XYError
 instance (Num i, Eq i) => Num (XY i) where
@@ -65,17 +65,17 @@ instance (Integral i) => Integral (XY i) where
     toInteger (XY 0 0 c) = toInteger c
     toInteger _ = 0
 
-day2b :: String -> Int
-day2b input = runST $ do
-    mem <- parseST input
-    writeArray mem 1 $ XY 1 0 0
-    writeArray mem 2 $ XY 0 1 0
-    [] <- run Memory { readMem = readArray mem, writeMem = writeArray mem } []
-    XY {x = m, y = n, c} <- readArray mem 0
-    unless (n == 1) $ fail "unhandled"
-    let (x, y) = (19690720 - c) `quotRem` m
-    unless (inRange (0, 99) x && inRange (0, 99) y) $ fail "unexpected"
-    return $ 100 * x + y
-  where
-    parseST :: String -> ST s (STArray s Int (XY Int))
-    parseST = either (fail . show) thaw . parse (parser @Array @(XY Int) @()) ""
+day2b :: String -> Either (ParseErrorBundle String ()) Int
+day2b input = do
+    mem0 <- parse (parser @Array @(XY Int)) "" input
+    return $ runST $ do
+        mem <- thaw mem0
+        writeArray mem 1 $ XY 1 0 0
+        writeArray mem 2 $ XY 0 1 0
+        [] <- run' mem []
+        XY {x = m, y = n, c} <- readArray mem 0
+        unless (n == 1) $ fail "unhandled"
+        let (x, y) = (19690720 - c) `quotRem` m
+        unless (inRange (0, 99) x && inRange (0, 99) y) $ fail "unexpected"
+        return $ 100 * x + y
+  where run' = run :: STArray s Int (XY Int) -> [XY Int] -> ST s [XY Int]
