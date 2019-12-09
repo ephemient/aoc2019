@@ -3,7 +3,6 @@ Module:         Day5
 Description:    <https://adventofcode.com/2019/day/5 Day 5: Sunny with a Chance of Asteroids>
 -}
 {-# LANGUAGE FlexibleContexts, TypeApplications #-}
-{-# OPTIONS_GHC -Wno-missing-fields #-}
 module Day5 (day5a, day5b) where
 
 import Control.Monad.ST (ST, runST)

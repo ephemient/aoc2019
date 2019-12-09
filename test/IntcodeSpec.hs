@@ -4,7 +4,6 @@
 module IntcodeSpec (spec) where
 
 import Data.Array.IO (IOUArray, getElems, newListArray, readArray, writeArray)
-import Data.IORef (modifyIORef', newIORef, readIORef)
 import Intcode (Memory(..))
 import qualified Intcode (run)
 import Test.Hspec (Spec, describe, it, shouldReturn)
@@ -14,26 +13,14 @@ import Test.QuickCheck.Monadic (monadicIO, pick, run)
 runMem :: [Int] -> IO [Int]
 runMem ints = do
     mem <- newListArray @IOUArray @Int @IO @Int (0, length ints - 1) ints
-    base <- newIORef 0
-    let memory = Memory
-          { readMem = readArray mem
-          , writeMem = writeArray mem
-          , readBase = readIORef base
-          , modifyBase = modifyIORef' base
-          }
+    let memory = Memory { readMem = readArray mem , writeMem = writeArray mem }
     Intcode.run memory [] `shouldReturn` []
     getElems mem
 
 compile :: [Int] -> [Int] -> IO [Int]
 compile code input = do
     mem <- newListArray @IOUArray (0, length code - 1) code
-    base <- newIORef 0
-    let memory = Memory
-          { readMem = readArray mem
-          , writeMem = writeArray mem
-          , readBase = readIORef base
-          , modifyBase = modifyIORef' base
-          }
+    let memory = Memory { readMem = readArray mem , writeMem = writeArray mem }
     Intcode.run memory input
 
 spec :: Spec

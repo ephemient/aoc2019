@@ -10,7 +10,7 @@ import Control.Monad.ST (runST)
 import Data.Functor (($>))
 import Data.List.NonEmpty (nonEmpty)
 import qualified Data.List.NonEmpty as NonEmpty (last)
-import Data.STRef (modifySTRef', newSTRef, readSTRef, writeSTRef)
+import Data.STRef (newSTRef, readSTRef, writeSTRef)
 import Data.Vector.Unboxed (Unbox, Vector)
 import qualified Data.Vector.Unboxed as Vector (fromList, thaw)
 import qualified Data.Vector.Unboxed.Mutable as Vector (length, unsafeGrow, unsafeRead, unsafeWrite)
@@ -26,7 +26,6 @@ parser = Vector.fromList <$>
 run' :: (Integral e, Unbox e) => Vector e -> [e] -> [e]
 run' mem0 input = runST $ do
     mem <- Vector.thaw mem0 >>= newSTRef
-    base <- newSTRef 0
     let readMem i | i < 0 = fail "negtive index"
         readMem i = do
             mem' <- readSTRef mem
@@ -42,8 +41,6 @@ run' mem0 input = runST $ do
                 forM_ [size..i - 1] $ Vector.unsafeWrite mem'' `flip` 0
                 writeSTRef mem mem'' $> mem''
             Vector.unsafeWrite mem'' i e
-        readBase = readSTRef base
-        modifyBase = modifySTRef' base
     run Memory {..} input
 
 day9a :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
