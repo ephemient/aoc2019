@@ -25,8 +25,9 @@ run mem0 input = do
             mem' <- readMutVar mem
             let size = Vector.length mem'
             mem'' <- if i < size then return mem' else do
-                mem'' <- Vector.unsafeGrow mem' $ i + 1 - size
-                forM_ [size..i - 1] $ Vector.unsafeWrite mem'' `flip` 0
+                let size' = max (i + 1) (2 * size)
+                mem'' <- Vector.unsafeGrow mem' $ size' - size
+                forM_ [size..size' - 1] $ Vector.unsafeWrite mem'' `flip` 0
                 writeMutVar mem mem'' $> mem''
             Vector.unsafeWrite mem'' i e
     Intcode.run Memory {..} input
