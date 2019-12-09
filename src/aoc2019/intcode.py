@@ -45,6 +45,12 @@ def run(mem, raw_input):
     [1000]
     >>> run([3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99], [9])
     [1001]
+    >>> run([109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99], [])
+    [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
+    >>> run([1102, 34915192, 34915192, 7, 4, 7, 99, 0], [])
+    [1219070632396864]
+    >>> run([104, 1125899906842624, 99], [])
+    [1125899906842624]
     '''
     async def async_work():
         input, output = asyncio.Queue(), asyncio.Queue()
@@ -55,21 +61,41 @@ def run(mem, raw_input):
         while not output.empty():
             raw_output.append(await output.get())
         return raw_output
+
     return asyncio.run(async_work())
 
 
 async def run_async(mem, input, output):
-    ip = 0
+    ip, base = 0, 0
     last_output = None
 
+    def index(n):
+        mode = mem[ip] // 10**(n + 1) % 10
+        try:
+            if mode == 0:
+                return mem[ip + n]
+            elif mode == 1:
+                return ip + n
+            elif mode == 2:
+                return base + mem[ip + n]
+            else:
+                raise RuntimeError(f'bad mode {mode}')
+        except IndexError as _:
+            return 0
+
     def get_arg(n):
-        if mem[ip] // 10**(n + 1) % 10 == 0:
-            return mem[mem[ip + n]]
-        else:
-            return mem[ip + n]
+        try:
+            return mem[index(n)]
+        except IndexError as _:
+            return 0
 
     def set_arg(n, value):
-        mem[mem[ip + n]] = value
+        i = index(n)
+        if i < len(mem):
+            mem[index(n)] = value
+        else:
+            mem.extend(0 for _ in range(len(mem), i))
+            mem.append(value)
 
     while True:
         op = mem[ip] % 100
@@ -96,6 +122,9 @@ async def run_async(mem, input, output):
         elif op == 8:
             set_arg(3, int(get_arg(1) == get_arg(2)))
             ip += 4
+        elif op == 9:
+            base += get_arg(1)
+            ip += 2
         elif op == 99:
             return last_output
         else:
