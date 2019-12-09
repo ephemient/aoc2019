@@ -105,7 +105,7 @@ spec = do
                 output <- run $ intcode [x]
                 return $ output === [999 + fromEnum (compare x 8)]
     describe "day 9 part 1" $
-        it "example 1" $ do
+        it "examples" $ do
             let quine =
                   [ 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006
                   , 101, 0, 99 ]

@@ -28,8 +28,8 @@ library:
   - array
   - containers
   - megaparsec
-  - mtl
   - split
+  - vector
 
 executables:
   aoc2019-exe:
