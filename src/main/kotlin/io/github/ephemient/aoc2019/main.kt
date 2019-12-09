@@ -5,6 +5,7 @@ private object resources {
         javaClass.classLoader.getResourceAsStream(name).bufferedReader().readLines()
 }
 
+@Suppress("LongMethod")
 fun main(args: Array<String>) {
     val days = args.mapNotNull { it.toIntOrNull() }.takeIf { it.isNotEmpty() }
 
@@ -69,6 +70,14 @@ fun main(args: Array<String>) {
         println("Day 8")
         println(day8.part1())
         println(day8.part2())
+        println()
+    }
+
+    if (days?.contains(9) != false) {
+        val day9 = Day9(resources["day9.txt"])
+        println("Day 9")
+        println(day9.part1())
+        println(day9.part2())
         println()
     }
 }

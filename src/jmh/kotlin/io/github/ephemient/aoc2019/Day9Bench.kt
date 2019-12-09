@@ -6,17 +6,17 @@ import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 
 @State(Scope.Thread)
-open class Day7Bench {
+open class Day9Bench {
     private lateinit var lines: List<String>
 
     @Setup
     fun prepare() {
-        lines = javaClass.classLoader.getResourceAsStream("day7.txt").bufferedReader().readLines()
+        lines = javaClass.classLoader.getResourceAsStream("day9.txt").bufferedReader().readLines()
     }
 
     @Benchmark
-    fun part1(): Long? = Day7(lines).part1()
+    fun part1(): Long? = Day9(lines).part1()
 
     @Benchmark
-    fun part2(): Long? = Day7(lines).part2()
+    fun part2(): Long? = Day9(lines).part2()
 }

@@ -7,18 +7,18 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class Day7(private val lines: List<String>) {
-    private val ints: List<Int> =
-        lines.first().splitToSequence(",").map { it.toInt() }.toList()
+class Day7(lines: List<String>) {
+    private val ints: List<Long> =
+        lines.first().splitToSequence(",").map { it.toLong() }.toList()
 
-    fun part1(): Int? = runBlocking {
+    fun part1(): Long? = runBlocking {
         listOf(0, 1, 2, 3, 4)
             .permutations()
             .mapNotNull { amplify(ints, it) }
             .max()
     }
 
-    fun part2(): Int? = runBlocking {
+    fun part2(): Long? = runBlocking {
         listOf(5, 6, 7, 8, 9)
             .permutations()
             .mapNotNull { amplify(ints, it) }
@@ -27,14 +27,16 @@ class Day7(private val lines: List<String>) {
 
     companion object {
         @VisibleForTesting
-        suspend fun CoroutineScope.amplify(mem: Collection<Int>, order: List<Int>): Int? =
+        suspend fun CoroutineScope.amplify(mem: Collection<Long>, order: List<Int>): Long? =
             coroutineScope {
-                val channels = order.map { Channel<Int>(Channel.UNLIMITED).apply { send(it) } }
+                val channels = order.map {
+                    Channel<Long>(Channel.UNLIMITED).apply { send(it.toLong()) }
+                }
                 channels.first().send(0)
                 channels.zipWithNext() { input, output ->
-                    launch { Intcode(mem.toIntArray()).runAsync(input, output) }
+                    launch { Intcode(mem.toMutableList()).runAsync(input, output) }
                 }
-                Intcode(mem.toIntArray()).runAsync(channels.last(), channels.first())
+                Intcode(mem.toMutableList()).runAsync(channels.last(), channels.first())
             }
 
         fun <T> List<T>.permutations(): Iterable<List<T>> = sequence<List<T>> {
