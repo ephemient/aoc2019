@@ -1,4 +1,4 @@
-use super::day5::run;
+use super::intcode::Intcode;
 use super::util;
 use crossbeam_channel;
 use itertools::{self, Itertools};
@@ -29,8 +29,7 @@ fn amplify(
             let r = channels[i].1.clone();
             thread::spawn(move || -> Result<_, Box<dyn error::Error + Send + Sync>> {
                 let mut output: Option<i32> = None;
-                run::<_, _, Box<dyn error::Error + Send + Sync>>(
-                    &mut mem,
+                Intcode::new(&mut mem).run::<_, _, Box<dyn error::Error + Send + Sync>>(
                     || Ok(r.recv()?),
                     |value| {
                         output = Some(value);
