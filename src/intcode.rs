@@ -45,7 +45,7 @@ impl<'a, T> Intcode<'a, T>
 where
     T: Clone + Default,
 {
-    fn get_raw(self: &Self, idx: usize) -> T {
+    fn get_raw(&self, idx: usize) -> T {
         match self.mem.get(idx) {
             Some(value) => value.clone(),
             None => T::default(),
@@ -57,11 +57,12 @@ impl<'a, T> Intcode<'a, T>
 where
     T: Clone + Default + Into<i64>,
 {
-    fn arg(self: &Self, n: u32) -> Result<T, Error> {
-        Ok(self.get_raw(self.index(n)?))
+    fn arg(&mut self, n: u32) -> Result<T, Error> {
+        let i = self.index(n)?;
+        return Ok(self.get_raw(i));
     }
 
-    fn arg_mut(self: &mut Self, n: u32) -> Result<&mut T, Error> {
+    fn arg_mut(&mut self, n: u32) -> Result<&mut T, Error> {
         let idx = self.index(n)?;
         if idx >= self.mem.len() {
             self.mem.resize_with(idx + 1, T::default);
@@ -69,7 +70,7 @@ where
         return Ok(&mut self.mem[idx]);
     }
 
-    fn index(self: &Self, n: u32) -> Result<usize, Error> {
+    fn index(&mut self, n: u32) -> Result<usize, Error> {
         let op = self.get_raw(self.ip).into();
         match op / 10i64.pow(n + 1) % 10 {
             0 => Ok(self.get_raw(self.ip + n as usize).into() as usize),
@@ -84,7 +85,7 @@ impl<'a, T> Intcode<'a, T>
 where
     T: Clone + Default + From<bool> + Into<i64> + Add<Output = T> + Mul<Output = T> + Ord,
 {
-    fn step<I, O, E>(self: &mut Self, input: &mut I, output: &mut O) -> Result<bool, E>
+    fn step<I, O, E>(&mut self, input: &mut I, output: &mut O) -> Result<bool, E>
     where
         I: FnMut() -> Result<T, E>,
         O: FnMut(T) -> Result<(), E>,
@@ -140,7 +141,7 @@ where
         return Ok(true);
     }
 
-    pub fn run<I, O, E>(self: &mut Self, mut input: I, mut output: O) -> Result<(), E>
+    pub fn run<I, O, E>(&mut self, mut input: I, mut output: O) -> Result<(), E>
     where
         I: FnMut() -> Result<T, E>,
         O: FnMut(T) -> Result<(), E>,
