@@ -6,7 +6,7 @@ Description:    <https://adventofcode.com/2019/day/11 Day 11: Space Police>
 module Day11 (day11a, day11b) where
 
 import Control.Monad.ST (runST)
-import Control.Monad.State (execStateT, get, lift, put)
+import Control.Monad.State (evalStateT, get, gets, lift, put)
 import Data.Bool (bool)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
@@ -29,7 +29,7 @@ data WalkState k i e = WalkState
   }
 
 walk :: Bool -> Vector Int -> Map (Int, Int) Bool
-walk start mem0 = grid $ runST $ do
+walk start mem0 = runST $ do
     mem <- memory mem0
     let liftedMemory = Memory
           { readMem = lift . readMem mem
@@ -56,8 +56,8 @@ walk start mem0 = grid $ runST $ do
                 next context0 (input ++ [fromEnum color]) base ip
           , terminate
           }
-        terminate _ _ _ = return ()
-    execStateT (step liftedMemory context0 [fromEnum start] 0 0) WalkState
+        terminate _ _ _ = gets grid
+    evalStateT (step liftedMemory context0 [fromEnum start] 0 0) WalkState
           { grid = Map.singleton (0, 0) start
           , position = (0, 0)
           , direction = (0, 1)
