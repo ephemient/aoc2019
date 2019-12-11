@@ -17,36 +17,39 @@ fn walk(
     let result = thread::spawn(
         move || -> Result<HashMap<(i32, i32), bool>, Box<dyn error::Error + Send + Sync>> {
             let mut result: HashMap<(i32, i32), bool> = HashMap::new();
-            result.insert((0, 0), start);
             let mut x = 0;
             let mut y = 0;
             let mut dx = 0;
             let mut dy = 1;
+            input_sender.send(start as i64)?;
             loop {
-                let is_true = result.get(&(x, y)).map_or(false, |b| *b);
-                select! {
-                    send(input_sender, is_true as i64) -> res => res?,
-                    recv(stop_receiver) -> _ => break,
-                }
                 select! {
                     recv(output_receiver) -> color => {
                         result.insert((x, y), color? != 0);
                     }
-                    recv(stop_receiver) -> _ => break,
+                    recv(stop_receiver) -> res => {
+                        res?;
+                        break;
+                    }
                 }
                 select! {
                     recv(output_receiver) -> turn => {
-                        mem::swap(&mut dx, &mut dy);
-                        if turn? == 0 {
+                        if turn? != 0 {
                             dx = -dx;
                         } else {
                             dy = -dy;
                         }
+                        mem::swap(&mut dx, &mut dy);
                         x += dx;
                         y += dy;
                     }
-                    recv(stop_receiver) -> _ => break,
+                    recv(stop_receiver) -> res => {
+                        res?;
+                        break;
+                    }
                 }
+                let is_true = result.get(&(x, y)).map_or(false, |b| *b);
+                input_sender.send(is_true as i64)?;
             }
             return Ok(result);
         },
