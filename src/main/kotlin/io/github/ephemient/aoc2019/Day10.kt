@@ -25,7 +25,7 @@ private val directionComparator: Comparator<Direction> = compareBy<Direction> { 
     .thenBy { it.denominator != 0 }
     .thenComparator { (_, y, x), (_, v, u) -> compareValues(y * u, v * x) }
 
-private fun <T> Iterable<Iterable<T>>.roundRobin(): Sequence<T> = sequence<T> {
+private fun <T> Iterable<Iterable<T>>.roundRobin(): Sequence<T> = sequence {
     val iterators = mapTo(mutableListOf<Iterator<T>>()) { it.iterator() }
     while (iterators.isNotEmpty()) {
         val iteratorsIterator = iterators.iterator()
