@@ -10,7 +10,7 @@ import Control.Monad.State (evalStateT, get, gets, lift, put)
 import Data.Bool (bool)
 import Data.List (intercalate)
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map (filter, findWithDefault, insert, keysSet, singleton, size)
+import qualified Data.Map.Strict as Map (empty, filter, findWithDefault, insert, keysSet, size)
 import qualified Data.Set as Set (elems, member)
 import Data.Vector.Generic (Vector, fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
@@ -58,11 +58,8 @@ walk start mem0 = runST $ do
           , terminate
           }
         terminate _ _ _ = gets grid
-    evalStateT (step mem context0 [fromEnum start] 0 0) WalkState
-          { grid = Map.singleton (0, 0) start
-          , position = (0, 0)
-          , direction = (0, 1)
-          }
+    evalStateT (step mem context0 [fromEnum start] 0 0)
+        WalkState { grid = Map.empty, position = (0, 0), direction = (0, 1) }
 
 day11a :: String -> Either (ParseErrorBundle String ()) Int
 day11a = fmap (Map.size . walk @Int @Unboxed.Vector False) . parse parser ""
