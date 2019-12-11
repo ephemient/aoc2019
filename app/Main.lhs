@@ -89,6 +89,10 @@ import Day9 (day9a, day9b)
 ```haskell
 import Day10 (day10a, day10b)
 ```
+## [Day 11: Space Police](/src/Day11.hs)
+```haskell
+import Day11 (day11a, day11b)
+```
 
 ---
 
@@ -129,4 +133,5 @@ main = do
     run 8 putStrLn [show . day8a 25 6, day8b 25 6]
     run 9 (putStrLn . showError (maybeBottom show)) [day9a, day9b]
     run 10 print [day10a, (!! 199) . day10b]
+    run 11 (putStrLn . showError id) [fmap show . day11a, day11b]
 ```

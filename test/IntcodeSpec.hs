@@ -4,7 +4,7 @@
 module IntcodeSpec (spec) where
 
 import Data.Array.IO (IOUArray, getElems, newListArray)
-import Data.Vector.Unboxed (fromList, thaw)
+import Data.Vector.Unboxed (fromList)
 import qualified Intcode.Array (run)
 import qualified Intcode.Vector (run)
 import Test.Hspec (Spec, describe, it, shouldReturn)
@@ -23,7 +23,7 @@ runArray ints input =
     flip Intcode.Array.run input
 
 runVector :: [Int] -> [Int] -> IO [Int]
-runVector ints input = thaw (fromList ints) >>= flip Intcode.Vector.run input
+runVector ints input = Intcode.Vector.run (fromList ints) input
 
 spec :: Spec
 spec = do

@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Intcode.Array where
+module Intcode.Array (run) where
 
 import Data.Array.MArray (Ix, MArray, readArray, writeArray)
 import Intcode (Memory(..))

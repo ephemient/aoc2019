@@ -1,19 +1,19 @@
 {-# LANGUAGE LambdaCase, NamedFieldPuns, RecordWildCards #-}
-module Intcode (Memory(..), run) where
+module Intcode (Context(..), Memory(..), run, step) where
 
 data Memory m e i = Memory { readMem :: i -> m e , writeMem :: i -> e -> m () }
 
 data Context m e i a = Context
   { next :: [e] -> i -> i -> m a
   , output :: e -> [e] -> i -> i -> m a
-  , terminate :: i -> i -> m a
+  , terminate :: [e] -> i -> i -> m a
   }
 
 run :: (Monad m, Integral e, Num i) => Memory m e i -> [e] -> m [e]
 run memory = flip next 0 `flip` 0 where
     next = step memory Context {..}
     output e input base ip = (e:) <$> next input base ip
-    terminate _ _ = return []
+    terminate _ _ _ = return []
 
 step :: (Monad m, Integral e, Num i) =>
     Memory m e i -> Context m e i a -> [e] -> i -> i -> m a
@@ -43,5 +43,5 @@ step Memory {..} Context {..} input base ip = do
         7 -> binOp $ \x y -> if x < y then 1 else 0
         8 -> binOp $ \x y -> if x == y then 1 else 0
         9 -> getArg 1 >>= (next input `flip` (ip + 2)) . (+) base . fromIntegral
-        99 -> terminate base ip
+        99 -> terminate input base ip
         _ -> fail "bad opcode"

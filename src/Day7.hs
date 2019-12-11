@@ -37,7 +37,7 @@ maxAmplify mem phases = do
         run' phase = do
             mem' <- newListArray @a @(Linear e Int) (bounds mem) $
                 fromIntegral <$> elems mem
-            run Memory {readMem = readArray mem', writeMem = writeArray mem' } $
+            run Memory { readMem = readArray mem', writeMem = writeArray mem' } $
                 fromIntegral phase : vars
     amplifiers <- mapM run' phases
     let outputs = resolve . evaluate <$> permutations amplifiers
