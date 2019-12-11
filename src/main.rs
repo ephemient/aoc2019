@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate build_const;
+#[macro_use]
+extern crate crossbeam_channel;
 
 use std::collections::HashSet;
 use std::env;
@@ -16,6 +18,7 @@ mod day7;
 mod day8;
 mod day9;
 mod day10;
+mod day11;
 mod intcode;
 mod util;
 
@@ -95,6 +98,13 @@ fn main() -> io::Result<()> {
         println!("Day 10");
         println!("{:?}", day10::part1(DAY10));
         println!("{:?}", day10::part2(DAY10).ok_or_else(ioerror)?);
+        println!();
+    }
+
+    if args.is_empty() || args.contains("11") {
+        println!("Day 11");
+        println!("{:?}", day11::part1(DAY11).map_err(util::to_ioerror)?);
+        println!("{}", day11::part2(DAY11).map_err(util::to_ioerror)?);
         println!();
     }
 
