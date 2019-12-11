@@ -1,32 +1,37 @@
-import asyncio
 from aoc2019 import intcode
+import asyncio
 from collections import defaultdict
 import fileinput
 
 
 async def walk(mem, start):
-    grid = defaultdict(bool)
-    grid[(0, 0)] = start
     input = asyncio.Queue()
     output = asyncio.Queue()
 
     async def work():
+        grid = defaultdict(bool)
+        grid[(0, 0)] = start
         x, y = 0, 0
         dx, dy = 0, 1
         while True:
             await input.put(int(grid[(x, y)]))
-            grid[(x, y)] = bool(await output.get())
-            if await output.get():
-                dx, dy = dy, -dx
+            color = await output.get()
+            if color is None:
+                break
+            grid[(x, y)] = bool(color)
+            turn = await output.get()
+            if turn is None:
+                break
             else:
-                dx, dy = -dy, dx
+                dx, dy = (dy, -dx) if turn else (-dy, dx)
             x += dx
             y += dy
+        return grid
 
-    job = asyncio.create_task(work())
+    result = asyncio.create_task(work())
     await intcode.run_async(mem, input, output)
-    job.cancel()
-    return grid
+    await output.put(None)
+    return (await asyncio.gather(result))[0]
 
 
 def part1(lines):
