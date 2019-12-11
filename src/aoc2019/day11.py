@@ -10,11 +10,10 @@ async def walk(mem, start):
 
     async def work():
         grid = defaultdict(bool)
-        grid[(0, 0)] = start
         x, y = 0, 0
         dx, dy = 0, 1
+        await input.put(int(start))
         while True:
-            await input.put(int(grid[(x, y)]))
             color = await output.get()
             if color is None:
                 break
@@ -22,16 +21,16 @@ async def walk(mem, start):
             turn = await output.get()
             if turn is None:
                 break
-            else:
-                dx, dy = (dy, -dx) if turn else (-dy, dx)
+            dx, dy = (dy, -dx) if turn else (-dy, dx)
             x += dx
             y += dy
+            await input.put(int(grid[(x, y)]))
         return grid
 
     result = asyncio.create_task(work())
     await intcode.run_async(mem, input, output)
     await output.put(None)
-    return (await asyncio.gather(result))[0]
+    return await result
 
 
 def part1(lines):
