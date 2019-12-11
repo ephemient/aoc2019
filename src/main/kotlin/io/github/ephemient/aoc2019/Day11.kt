@@ -23,11 +23,10 @@ class Day11(private val lines: List<String>) {
                 var dx = 0
                 var dy = 1
                 try {
+                    input.send(if (start) 1 else 0)
                     while (true) {
-                        val pos = x to y
-                        input.send(if (grid.getOrElse(pos) { false }) 1 else 0)
                         val color = output.receive()
-                        grid[pos] = color != 0L
+                        grid[x to y] = color != 0L
                         val turn = output.receive()
                         if (turn == 0L) {
                             dx = -dy.also { dy = dx }
@@ -36,6 +35,7 @@ class Day11(private val lines: List<String>) {
                         }
                         x += dx
                         y += dy
+                        input.send(if (grid[x to y] == true) 1 else 0)
                     }
                 } catch (_: ClosedReceiveChannelException) {
                 } catch (_: ClosedSendChannelException) {
