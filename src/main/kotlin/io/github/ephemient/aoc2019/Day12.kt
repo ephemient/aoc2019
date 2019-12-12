@@ -28,18 +28,33 @@ class Day12(lines: List<String>) {
     }
 
     fun part2(): Long {
-        val seenX = mutableSetOf<List<Pair<Int, Int>>>()
-        val seenY = mutableSetOf<List<Pair<Int, Int>>>()
-        val seenZ = mutableSetOf<List<Pair<Int, Int>>>()
-        for (state in simulate()) {
-            if (!seenX.add(state.map { (p, v) -> p.x to v.x }) &&
-                !seenY.add(state.map { (p, v) -> p.y to v.y }) &&
-                !seenZ.add(state.map { (p, v) -> p.z to v.z })
+        var seenX: Int? = null
+        var seenY: Int? = null
+        var seenZ: Int? = null
+        for ((i, state) in simulate().withIndex()) {
+            if (seenX == null && state.withIndex().all { (j, pair) ->
+                pair.second.x == 0 && pair.first.x == points[j].x
+            }
             ) {
-                break
+                seenX = i + 1
+            }
+            if (seenY == null && state.withIndex().all { (j, pair) ->
+                pair.second.y == 0 && pair.first.y == points[j].y
+            }
+            ) {
+                seenY = i + 1
+            }
+            if (seenZ == null && state.withIndex().all { (j, pair) ->
+                pair.second.z == 0 && pair.first.z == points[j].z
+            }
+            ) {
+                seenZ = i + 1
+            }
+            if (seenX != null && seenY != null && seenZ != null) {
+                return lcm(seenX.toLong(), lcm(seenY.toLong(), seenZ.toLong()))
             }
         }
-        return lcm(seenX.size.toLong(), lcm(seenY.size.toLong(), seenZ.size.toLong()))
+        error("unreachable")
     }
 
     private data class Vector(val x: Int, val y: Int, val z: Int) {
