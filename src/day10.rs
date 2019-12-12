@@ -1,3 +1,4 @@
+use super::util;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::mem;
@@ -98,49 +99,6 @@ fn best(points: Vec<(i32, i32)>) -> BTreeMap<Direction, Vec<(i32, i32)>> {
         .unwrap_or_else(BTreeMap::new)
 }
 
-struct RoundRobin<I> {
-    iterators: Vec<I>,
-}
-
-impl<I> RoundRobin<I>
-where
-    I: Iterator,
-{
-    fn new<J, K>(iterables: J) -> RoundRobin<I>
-    where
-        J: IntoIterator<Item = K>,
-        K: IntoIterator<IntoIter = I, Item = <I as Iterator>::Item>,
-    {
-        RoundRobin {
-            iterators: iterables
-                .into_iter()
-                .map(|iterable| iterable.into_iter())
-                .collect::<Vec<_>>(),
-        }
-    }
-}
-
-impl<I> Iterator for RoundRobin<I>
-where
-    I: Iterator,
-{
-    type Item = <I as Iterator>::Item;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while !self.iterators.is_empty() {
-            let mut iterator = self.iterators.remove(0);
-            match iterator.next() {
-                None => continue,
-                Some(item) => {
-                    self.iterators.push(iterator);
-                    return Some(item);
-                }
-            };
-        }
-        None
-    }
-}
-
 pub fn part1<'a, I, S>(lines: I) -> usize
 where
     I: IntoIterator<Item = &'a S>,
@@ -154,7 +112,8 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    RoundRobin::new(best(parse(lines)).values())
+    util::transpose(best(parse(lines)).values())
+        .flatten()
         .enumerate()
         .nth(199)
         .map(|(_, (x, y))| 100 * x + y)

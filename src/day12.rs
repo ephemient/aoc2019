@@ -1,3 +1,4 @@
+use super::util;
 use regex::Regex;
 use std::cmp::Ordering;
 use std::error;
@@ -51,41 +52,6 @@ where
     }
 }
 
-struct Transpose<I> {
-    iterators: Vec<I>,
-}
-
-impl<I> Transpose<I>
-where
-    I: Iterator,
-{
-    fn new<T>(iterators: T) -> Transpose<I>
-    where
-        T: Iterator,
-        <T as Iterator>::Item: IntoIterator<Item = <I as Iterator>::Item, IntoIter = I>,
-    {
-        Transpose {
-            iterators: iterators.map(|it| it.into_iter()).collect(),
-        }
-    }
-}
-
-impl<I> Iterator for Transpose<I>
-where
-    I: Iterator,
-{
-    type Item = Vec<<I as Iterator>::Item>;
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(
-            self.iterators
-                .iter_mut()
-                .filter_map(|it| it.next())
-                .collect::<Vec<_>>(),
-        )
-        .filter(|v| !v.is_empty())
-    }
-}
-
 fn lcm(x: u64, y: u64) -> u64 {
     let mut a = x;
     let mut b = y;
@@ -123,7 +89,7 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    Ok(Transpose::new(
+    Ok(util::transpose(
         parse2::<_, _, i32>(lines)?
             .iter()
             .filter_map(|axis| Simulation2::new(axis).nth(999)),
