@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate build_const;
+#[macro_use]
+extern crate lazy_static;
 
 use std::collections::HashSet;
 use std::env;
@@ -17,6 +19,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day12;
 mod intcode;
 mod util;
 
@@ -103,6 +106,13 @@ fn main() -> io::Result<()> {
         println!("Day 11");
         println!("{:?}", day11::part1(DAY11).map_err(util::to_ioerror)?);
         println!("{}", day11::part2(DAY11).map_err(util::to_ioerror)?);
+        println!();
+    }
+
+    if args.is_empty() || args.contains("12") {
+        println!("Day 12");
+        println!("{:?}", day12::part1(DAY12).map_err(util::to_ioerror)?);
+        println!("{:?}", day12::part2(DAY12).map_err(util::to_ioerror)?);
         println!();
     }
 
