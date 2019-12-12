@@ -25,6 +25,24 @@ impl error::Error for Error {
     }
 }
 
+pub trait Environment<T, E> {
+    fn input(&mut self) -> Result<T, E>;
+    fn output(&mut self, value: T) -> Result<(), E>;
+}
+
+impl<I, O, T, E> Environment<T, E> for (I, O)
+where
+    I: FnMut() -> Result<T, E>,
+    O: FnMut(T) -> Result<(), E>,
+{
+    fn input(&mut self) -> Result<T, E> {
+        self.0()
+    }
+    fn output(&mut self, value: T) -> Result<(), E> {
+        self.1(value)
+    }
+}
+
 pub struct Intcode<'a, T> {
     mem: &'a mut Vec<T>,
     ip: usize,
@@ -85,10 +103,8 @@ impl<'a, T> Intcode<'a, T>
 where
     T: Clone + Default + From<bool> + Into<i64> + Add<Output = T> + Mul<Output = T> + Ord,
 {
-    fn step<I, O, E>(&mut self, input: &mut I, output: &mut O) -> Result<bool, E>
+    fn step<E>(&mut self, env: &mut impl Environment<T, E>) -> Result<bool, E>
     where
-        I: FnMut() -> Result<T, E>,
-        O: FnMut(T) -> Result<(), E>,
         E: From<Error>,
     {
         let op = self.get_raw(self.ip).into();
@@ -102,11 +118,11 @@ where
                 self.ip += 4;
             }
             3 => {
-                *self.arg_mut(1)? = input()?;
+                *self.arg_mut(1)? = env.input()?;
                 self.ip += 2;
             }
             4 => {
-                output(self.arg(1)?)?;
+                env.output(self.arg(1)?)?;
                 self.ip += 2;
             }
             5 => {
@@ -141,13 +157,11 @@ where
         return Ok(true);
     }
 
-    pub fn run<I, O, E>(&mut self, mut input: I, mut output: O) -> Result<(), E>
+    pub fn run<E>(&mut self, env: &mut impl Environment<T, E>) -> Result<(), E>
     where
-        I: FnMut() -> Result<T, E>,
-        O: FnMut(T) -> Result<(), E>,
         E: From<Error>,
     {
-        while self.step(&mut input, &mut output)? {}
+        while self.step(env)? {}
         return Ok(());
     }
 }

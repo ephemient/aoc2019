@@ -12,10 +12,10 @@ where
         util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     mem[1] = 12;
     mem[2] = 2;
-    Intcode::new(&mut mem).run(
+    Intcode::new(&mut mem).run(&mut (
         || Err(Error::new("no input".to_string()))?,
         |_| Err(Error::new("no output".to_string())),
-    )?;
+    ))?;
     return Ok(mem[0]);
 }
 
@@ -32,10 +32,10 @@ where
             let mut mem = mem0.clone();
             mem[1] = noun;
             mem[2] = verb;
-            Intcode::new(&mut mem).run(
+            Intcode::new(&mut mem).run(&mut (
                 || Err(Error::new("no input".to_string()))?,
                 |_| Err(Error::new("no output".to_string())),
-            )?;
+            ))?;
             if mem[0] == 19690720 {
                 return Ok(100 * noun + verb);
             }

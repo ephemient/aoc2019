@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate build_const;
-#[macro_use]
-extern crate crossbeam_channel;
 
 use std::collections::HashSet;
 use std::env;
@@ -9,6 +7,8 @@ use std::io;
 use std::iter::FromIterator;
 
 mod day1;
+mod day10;
+mod day11;
 mod day2;
 mod day3;
 mod day4;
@@ -17,8 +17,6 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day10;
-mod day11;
 mod intcode;
 mod util;
 

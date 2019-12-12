@@ -1,65 +1,57 @@
-use super::intcode::Intcode;
+use super::intcode::{self, Intcode};
 use super::util;
-use crossbeam_channel;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use std::error;
-use std::mem;
-use std::thread;
 
-fn walk(
-    mem: &mut Vec<i64>,
+struct Walk {
+    grid: HashMap<(i32, i32), bool>,
+    x: i32,
+    y: i32,
+    dx: i32,
+    dy: i32,
     start: bool,
-) -> Result<HashMap<(i32, i32), bool>, Box<dyn error::Error + Send + Sync>> {
-    let (input_sender, input_receiver) = crossbeam_channel::unbounded::<i64>();
-    let (output_sender, output_receiver) = crossbeam_channel::bounded::<i64>(0);
-    let (stop_sender, stop_receiver) = crossbeam_channel::bounded::<()>(0);
-    let result = thread::spawn(
-        move || -> Result<HashMap<(i32, i32), bool>, Box<dyn error::Error + Send + Sync>> {
-            let mut result: HashMap<(i32, i32), bool> = HashMap::new();
-            let mut x = 0;
-            let mut y = 0;
-            let mut dx = 0;
-            let mut dy = 1;
-            input_sender.send(start as i64)?;
-            loop {
-                select! {
-                    recv(output_receiver) -> color => {
-                        result.insert((x, y), color? != 0);
-                    }
-                    recv(stop_receiver) -> res => {
-                        res?;
-                        break;
-                    }
-                }
-                select! {
-                    recv(output_receiver) -> turn => {
-                        if turn? != 0 {
-                            dx = -dx;
-                        } else {
-                            dy = -dy;
-                        }
-                        mem::swap(&mut dx, &mut dy);
-                        x += dx;
-                        y += dy;
-                    }
-                    recv(stop_receiver) -> res => {
-                        res?;
-                        break;
-                    }
-                }
-                let is_true = result.get(&(x, y)).map_or(false, |b| *b);
-                input_sender.send(is_true as i64)?;
-            }
-            return Ok(result);
-        },
-    );
-    Intcode::new(mem).run::<_, _, Box<dyn error::Error + Send + Sync>>(
-        || Ok(input_receiver.recv()?),
-        |value| Ok(output_sender.send(value)?),
-    )?;
-    stop_sender.send(())?;
-    return result.join().map_err(|_| util::Error)?;
+    moving: bool,
+}
+
+impl intcode::Environment<i64, intcode::Error> for Walk {
+    fn input(&mut self) -> Result<i64, intcode::Error> {
+        Ok(self
+            .grid
+            .get(&(self.x, self.y))
+            .map_or_else(|| self.x == 0 && self.y == 0 && self.start, |b| *b) as i64)
+    }
+    fn output(&mut self, value: i64) -> Result<(), intcode::Error> {
+        if self.moving {
+            let (dx, dy) = match value {
+                0 => (-self.dy, self.dx),
+                _ => (self.dy, -self.dx),
+            };
+            self.x += dx;
+            self.y += dy;
+            self.dx = dx;
+            self.dy = dy;
+            self.moving = false;
+        } else {
+            self.grid.insert((self.x, self.y), value != 0);
+            self.moving = true;
+        }
+        return Ok(());
+    }
+}
+
+fn walk(mem: &mut Vec<i64>, start: bool) -> Result<HashMap<(i32, i32), bool>, intcode::Error> {
+    let mut walk = Walk {
+        grid: HashMap::new(),
+        x: 0,
+        y: 0,
+        dx: 0,
+        dy: 1,
+        start: start,
+        moving: false,
+    };
+    Intcode::new(mem).run(&mut walk)?;
+    return Ok(walk.grid);
 }
 
 pub fn part1<'a, I, S>(lines: I) -> Result<usize, Box<dyn error::Error + Send + Sync>>

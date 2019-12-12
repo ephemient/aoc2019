@@ -11,13 +11,13 @@ where
     let mut mem: Vec<i32> =
         util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     let mut output: Option<i32> = None;
-    Intcode::new(&mut mem).run::<_, _, Error>(
+    Intcode::new(&mut mem).run(&mut (
         || Ok(1),
-        |value| {
+        |value| -> Result<(), Error> {
             output = Some(value);
             Ok(())
         },
-    )?;
+    ))?;
     return Ok(output.ok_or_else(|| Error::new("no output".to_string()))?);
 }
 
@@ -30,12 +30,12 @@ where
     let mut mem: Vec<i32> =
         util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
     let mut output: Option<i32> = None;
-    Intcode::new(&mut mem).run::<_, _, Error>(
+    Intcode::new(&mut mem).run(&mut (
         || Ok(5),
-        |value| {
+        |value| -> Result<(), Error> {
             output = Some(value);
             Ok(())
         },
-    )?;
+    ))?;
     return Ok(output.ok_or_else(|| Error::new("no output".to_string()))?);
 }

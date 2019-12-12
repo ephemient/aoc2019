@@ -29,13 +29,13 @@ fn amplify(
             let r = channels[i].1.clone();
             thread::spawn(move || -> Result<_, Box<dyn error::Error + Send + Sync>> {
                 let mut output: Option<i32> = None;
-                Intcode::new(&mut mem).run::<_, _, Box<dyn error::Error + Send + Sync>>(
+                Intcode::new(&mut mem).run(&mut (
                     || Ok(r.recv()?),
-                    |value| {
+                    |value| -> Result<(), Box<dyn error::Error + Send + Sync>> {
                         output = Some(value);
                         Ok(s.send(value)?)
                     },
-                )?;
+                ))?;
                 Ok(output)
             })
         })
