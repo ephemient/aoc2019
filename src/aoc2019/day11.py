@@ -1,6 +1,5 @@
 from aoc2019 import intcode
 import asyncio
-from collections import defaultdict
 import fileinput
 
 
@@ -9,7 +8,7 @@ async def walk(mem, start):
     output = asyncio.Queue()
 
     async def work():
-        grid = defaultdict(bool)
+        grid = {}
         x, y = 0, 0
         dx, dy = 0, 1
         await input.put(int(start))
@@ -24,7 +23,7 @@ async def walk(mem, start):
             dx, dy = (dy, -dx) if turn else (-dy, dx)
             x += dx
             y += dy
-            await input.put(int(grid[(x, y)]))
+            await input.put(int(grid.get((x, y), False)))
         return grid
 
     result = asyncio.create_task(work())
