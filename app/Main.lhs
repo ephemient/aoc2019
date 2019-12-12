@@ -93,6 +93,10 @@ import Day10 (day10a, day10b)
 ```haskell
 import Day11 (day11a, day11b)
 ```
+## [Day 12: The N-Body Problem](/src/Day12.hs)
+```haskell
+import Day12 (day12a, day12b)
+```
 
 ---
 
@@ -134,4 +138,5 @@ main = do
     run 9 (putStrLn . showError (maybeBottom show)) [day9a, day9b]
     run 10 print [day10a, (!! 199) . day10b]
     run 11 (putStrLn . showError id) [fmap show . day11a, day11b]
+    run 12 (putStrLn . showError show) [fmap (!! 1000) . day12a, day12b]
 ```
