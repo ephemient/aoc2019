@@ -56,10 +56,7 @@ where
                 z: T::from(0),
             })
             .collect();
-        return Simulation {
-            points: points,
-            velocities: velocities,
-        };
+        Simulation { points, velocities }
     }
 }
 
@@ -79,13 +76,13 @@ where
         for (point, velocity) in self.points.iter_mut().zip(self.velocities.iter()) {
             *point += velocity.clone();
         }
-        return Some(
+        Some(
             self.points
                 .iter()
                 .zip(self.velocities.iter())
                 .map(|(point, velocity)| (point.clone(), velocity.clone()))
                 .collect(),
-        );
+        )
     }
 }
 
@@ -107,7 +104,7 @@ fn lcm(x: u64, y: u64) -> u64 {
         b %= a;
         mem::swap(&mut a, &mut b);
     }
-    return x / b * y;
+    x / b * y
 }
 
 fn parse<'a, I, S, T>(lines: I) -> Result<Vec<Vector<T>>, <T as FromStr>::Err>
@@ -119,7 +116,7 @@ where
     lazy_static! {
         static ref RE: Regex = Regex::new(r#"<x=(-?\d+), y=(-?\d+), z=(-?\d+)>"#).unwrap();
     }
-    return Ok(lines
+    Ok(lines
         .into_iter()
         .filter_map(|line| {
             RE.captures(line.as_ref())
@@ -132,7 +129,7 @@ where
                     })
                 })
         })
-        .collect::<Result<Vec<_>, _>>()?);
+        .collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn part1<'a, I, S>(lines: I) -> Result<i32, Box<dyn error::Error + Send + Sync>>
@@ -142,13 +139,13 @@ where
 {
     let points: Vec<Vector<i32>> = parse(lines)?;
     let state = Simulation::new(points).nth(999).ok_or(util::Error)?;
-    return Ok(state
+    Ok(state
         .into_iter()
         .map(|(point, velocity)| {
             (point.x.abs() + point.y.abs() + point.z.abs())
                 * (velocity.x.abs() + velocity.y.abs() + velocity.z.abs())
         })
-        .sum());
+        .sum())
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<u64, Box<dyn error::Error + Send + Sync>>
@@ -171,8 +168,8 @@ where
             break;
         }
     }
-    return Ok(lcm(
+    Ok(lcm(
         seen_x.len() as u64,
         lcm(seen_y.len() as u64, seen_z.len() as u64),
-    ));
+    ))
 }

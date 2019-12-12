@@ -23,8 +23,8 @@ impl ND {
         }
         ND {
             started: false,
-            current: current,
-            stop: stop,
+            current,
+            stop,
         }
     }
 }
@@ -49,9 +49,10 @@ impl Iterator for ND {
             self.started = true;
         }
         if self.current > self.stop {
-            return None;
+            None
+        } else {
+            Some(self.current.to_vec())
         }
-        return Some(self.current.to_vec());
     }
 }
 
@@ -62,16 +63,16 @@ where
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
     let dash = line.chars().position(|c| c == '-').ok_or(util::Error)?;
-    return Ok(ND::new(&line[..dash], &line[dash + 1..])
+    Ok(ND::new(&line[..dash], &line[dash + 1..])
         .filter(|a| {
             for i in 0..a.len() - 1 {
                 if a[i] == a[i + 1] {
                     return true;
                 }
             }
-            return false;
+            false
         })
-        .count());
+        .count())
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<usize, Box<dyn error::Error + Send + Sync>>
@@ -81,17 +82,17 @@ where
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
     let dash = line.chars().position(|c| c == '-').ok_or(util::Error)?;
-    return Ok(ND::new(&line[..dash], &line[dash + 1..])
+    Ok(ND::new(&line[..dash], &line[dash + 1..])
         .filter(|a| {
             for i in 0..a.len() - 1 {
                 if a[i] == a[i + 1]
-                    && (i <= 0 || a[i - 1] != a[i])
+                    && (i == 0 || a[i - 1] != a[i])
                     && (i + 2 >= a.len() || a[i + 1] != a[i + 2])
                 {
                     return true;
                 }
             }
-            return false;
+            false
         })
-        .count());
+        .count())
 }

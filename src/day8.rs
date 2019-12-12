@@ -28,7 +28,7 @@ where
         .ok_or(util::Error)?;
     let one = *counts.get(&'1').unwrap_or(&0usize);
     let two = *counts.get(&'2').unwrap_or(&0usize);
-    return Ok(one * two);
+    Ok(one * two)
 }
 
 pub fn part2<'a, I, S>(
@@ -58,11 +58,10 @@ where
             ),
         })
         .ok_or(util::Error)?;
-    return Ok(pixels
+    Ok(pixels
         .chunks(width)
-        .into_iter()
         .map(|line| {
-            line.into_iter()
+            line.iter()
                 .map(|c| match *c {
                     '0' => '\u{2592}',
                     '1' => '\u{2593}',
@@ -71,5 +70,5 @@ where
                 })
                 .collect::<String>()
         })
-        .join("\n"));
+        .join("\n"))
 }

@@ -9,7 +9,7 @@ pub struct Error {
 
 impl Error {
     pub fn new(msg: String) -> Error {
-        Error { msg: msg }
+        Error { msg }
     }
 }
 
@@ -52,7 +52,7 @@ pub struct Intcode<'a, T> {
 impl<'a, T> Intcode<'a, T> {
     pub fn new(mem: &'a mut Vec<T>) -> Intcode<'a, T> {
         Intcode {
-            mem: mem,
+            mem,
             ip: 0,
             base: 0,
         }
@@ -77,7 +77,7 @@ where
 {
     fn arg(&mut self, n: u32) -> Result<T, Error> {
         let i = self.index(n)?;
-        return Ok(self.get_raw(i));
+        Ok(self.get_raw(i))
     }
 
     fn arg_mut(&mut self, n: u32) -> Result<&mut T, Error> {
@@ -85,7 +85,7 @@ where
         if idx >= self.mem.len() {
             self.mem.resize_with(idx + 1, T::default);
         }
-        return Ok(&mut self.mem[idx]);
+        Ok(&mut self.mem[idx])
     }
 
     fn index(&mut self, n: u32) -> Result<usize, Error> {
@@ -154,7 +154,7 @@ where
             99 => return Ok(false),
             _ => return Err(Error::new(format!("bad opcode: {}", op)).into()),
         }
-        return Ok(true);
+        Ok(true)
     }
 
     pub fn run<E>(&mut self, env: &mut impl Environment<T, E>) -> Result<(), E>
@@ -162,6 +162,6 @@ where
         E: From<Error>,
     {
         while self.step(env)? {}
-        return Ok(());
+        Ok(())
     }
 }

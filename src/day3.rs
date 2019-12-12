@@ -12,15 +12,15 @@ fn to_points(input: &str) -> impl Iterator<Item = (i32, i32)> + '_ {
                 _ => return None,
             };
             let n = s[1..].parse::<u32>().ok()?;
-            return Some(
+            Some(
                 (0u32..n)
                     .scan(p, |p, _| {
                         p.0 += step.0;
                         p.1 += step.1;
-                        return Some(p.clone());
+                        Some(**p)
                     })
                     .collect::<Vec<_>>(),
-            );
+            )
         })
         .flatten()
 }
@@ -45,7 +45,7 @@ where
             }
         }
     }
-    return result;
+    result
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Option<usize>
@@ -73,5 +73,5 @@ where
                 .or_insert(distance);
         }
     }
-    return result;
+    result
 }

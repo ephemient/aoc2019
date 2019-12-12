@@ -19,7 +19,7 @@ where
 {
     fn new(orbits: &'a CollectingHashMap<T, T>) -> Checksums<'a, T> {
         Checksums {
-            orbits: orbits,
+            orbits,
             cache: HashMap::new(),
         }
     }
@@ -29,9 +29,7 @@ where
             Some(cached) => *cached,
             _ => {
                 let value = match self.orbits.get_all(key) {
-                    Some(children) => {
-                        i32::sum(children.into_iter().map(|x: &T| self.checksum(x) + 1))
-                    }
+                    Some(children) => i32::sum(children.iter().map(|x: &T| self.checksum(x) + 1)),
                     _ => 0,
                 };
                 self.cache.insert(key.clone(), value);
@@ -51,11 +49,11 @@ where
         .filter_map(|s| {
             let line = s.as_ref();
             let sep = line.find(')')?;
-            return Some((line[..sep].to_string(), line[sep + 1..].to_string()));
+            Some((line[..sep].to_string(), line[sep + 1..].to_string()))
         })
         .collect::<CollectingHashMap<_, _>>();
     let mut checksums = Checksums::new(&orbits);
-    return Ok(i32::sum(orbits.keys().map(|x| checksums.checksum(x))));
+    Ok(i32::sum(orbits.keys().map(|x| checksums.checksum(x))))
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<usize, Box<dyn error::Error + Send + Sync>>
@@ -68,18 +66,14 @@ where
         .filter_map(|s| {
             let line = s.as_ref();
             let sep = line.find(')')?;
-            return Some((line[sep + 1..].to_string(), line[..sep].to_string()));
+            Some((line[sep + 1..].to_string(), line[..sep].to_string()))
         })
         .collect::<HashMap<_, _>>();
-    let succ = |x: &String| rorbits.get(x).map(|s| s.clone());
+    let succ = |x: &String| rorbits.get(x).cloned();
     let san = iter::successors(Some("SAN".to_string()), succ).collect::<Vec<_>>();
     let you = iter::successors(Some("YOU".to_string()), succ).collect::<Vec<_>>();
-    let mut common = cmp::min(san.len(), you.len());
-    for i in 0..common {
-        if san[san.len() - i - 1] != you[you.len() - i - 1] {
-            common = i;
-            break;
-        }
-    }
-    return Ok(san.len() + you.len() - 2 * (common + 1));
+    let common = (0..cmp::min(san.len(), you.len()))
+        .find(|i| san[san.len() - i - 1] != you[you.len() - i - 1])
+        .unwrap_or_else(|| cmp::min(san.len(), you.len()));
+    Ok(san.len() + you.len() - 2 * (common + 1))
 }

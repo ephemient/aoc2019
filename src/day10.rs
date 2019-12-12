@@ -15,7 +15,7 @@ where
             }
         }
     }
-    return result;
+    result
 }
 
 #[derive(Eq, PartialEq)]
@@ -72,7 +72,7 @@ impl PartialOrd for Direction {
 
 fn explore(src: (i32, i32), points: &[(i32, i32)]) -> BTreeMap<Direction, Vec<(i32, i32)>> {
     let mut result: BTreeMap<Direction, Vec<(i32, i32)>> = BTreeMap::new();
-    for dst in points.into_iter() {
+    for dst in points {
         if src != *dst {
             result
                 .entry(Direction::between(src, *dst))
@@ -80,13 +80,13 @@ fn explore(src: (i32, i32), points: &[(i32, i32)]) -> BTreeMap<Direction, Vec<(i
                 .push(*dst);
         }
     }
-    return result;
+    result
 }
 
 fn best(points: Vec<(i32, i32)>) -> BTreeMap<Direction, Vec<(i32, i32)>> {
     let slice = &points[..];
-    return slice
-        .into_iter()
+    slice
+        .iter()
         .map(|src| (*src, explore(*src, slice)))
         .max_by_key(|(_, result)| result.len())
         .map(|((x, y), mut result)| {
@@ -95,7 +95,7 @@ fn best(points: Vec<(i32, i32)>) -> BTreeMap<Direction, Vec<(i32, i32)>> {
             }
             result
         })
-        .unwrap_or_else(BTreeMap::new);
+        .unwrap_or_else(BTreeMap::new)
 }
 
 struct RoundRobin<I> {
@@ -137,7 +137,7 @@ where
                 }
             };
         }
-        return None;
+        None
     }
 }
 

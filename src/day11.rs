@@ -36,7 +36,7 @@ impl intcode::Environment<i64, intcode::Error> for Walk {
             self.grid.insert((self.x, self.y), value != 0);
             self.moving = true;
         }
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -47,11 +47,11 @@ fn walk(mem: &mut Vec<i64>, start: bool) -> Result<HashMap<(i32, i32), bool>, in
         y: 0,
         dx: 0,
         dy: 1,
-        start: start,
+        start,
         moving: false,
     };
     Intcode::new(mem).run(&mut walk)?;
-    return Ok(walk.grid);
+    Ok(walk.grid)
 }
 
 pub fn part1<'a, I, S>(lines: I) -> Result<usize, Box<dyn error::Error + Send + Sync>>
@@ -60,9 +60,8 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mut mem: Vec<i64> =
-        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
-    return Ok(walk(&mut mem, false)?.len());
+    let mut mem: Vec<i64> = util::parse_many(&line.split(',').collect::<Vec<&str>>())?;
+    Ok(walk(&mut mem, false)?.len())
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<String, Box<dyn error::Error + Send + Sync>>
@@ -71,8 +70,7 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mut mem: Vec<i64> =
-        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
+    let mut mem: Vec<i64> = util::parse_many(&line.split(',').collect::<Vec<&str>>())?;
     let result = walk(&mut mem, true)?
         .into_iter()
         .filter(|(_, v)| *v)
@@ -81,15 +79,18 @@ where
     let (xs, ys) = result.clone().into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
     let (min_x, max_x) = xs.into_iter().minmax().into_option().ok_or(util::Error)?;
     let (min_y, max_y) = ys.into_iter().minmax().into_option().ok_or(util::Error)?;
-    return Ok((min_y..=max_y)
+    Ok((min_y..=max_y)
         .rev()
         .map(|y| {
             (min_x..=max_x)
-                .map(|x| match result.contains(&(x, y)) {
-                    true => '\u{2593}',
-                    false => '\u{2591}',
+                .map(|x| {
+                    if result.contains(&(x, y)) {
+                        '\u{2593}'
+                    } else {
+                        '\u{2591}'
+                    }
                 })
                 .collect::<String>()
         })
-        .join("\n"));
+        .join("\n"))
 }

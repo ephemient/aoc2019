@@ -5,12 +5,9 @@ use itertools::{self, Itertools};
 use std::error;
 use std::thread;
 
-fn amplify(
-    mem: &Vec<i32>,
-    order: &Vec<i32>,
-) -> Result<Option<i32>, Box<dyn error::Error + Send + Sync>> {
+fn amplify(mem: &[i32], order: &[i32]) -> Result<Option<i32>, Box<dyn error::Error + Send + Sync>> {
     let channels = order
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(i, n)| -> Result<_, crossbeam_channel::SendError<i32>> {
             let (s, r) = crossbeam_channel::unbounded::<i32>();
@@ -21,10 +18,9 @@ fn amplify(
             Ok((s, r))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    return Ok(*(0..order.len())
-        .into_iter()
+    Ok(*(0..order.len())
         .map(|i| {
-            let mut mem = mem.clone();
+            let mut mem = mem.to_vec();
             let s = channels[(i + 1) % order.len()].0.clone();
             let r = channels[i].1.clone();
             thread::spawn(move || -> Result<_, Box<dyn error::Error + Send + Sync>> {
@@ -46,7 +42,7 @@ fn amplify(
         })
         .collect::<Result<Vec<_>, _>>()?
         .last()
-        .ok_or(util::Error)?);
+        .ok_or(util::Error)?)
 }
 
 pub fn part1<'a, I, S>(lines: I) -> Result<i32, Box<dyn error::Error + Send + Sync>>
@@ -55,15 +51,14 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mem: Vec<i32> =
-        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
-    return Ok(itertools::max(
+    let mem: Vec<i32> = util::parse_many(&line.split(',').collect::<Vec<&str>>())?;
+    Ok(itertools::max(
         (0..5)
             .permutations(5)
             .filter_map(|order| amplify(&mem, &order).transpose())
             .collect::<Result<Vec<i32>, _>>()?,
     )
-    .ok_or(util::Error)?);
+    .ok_or(util::Error)?)
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<i32, Box<dyn error::Error + Send + Sync>>
@@ -72,13 +67,12 @@ where
     S: AsRef<str> + 'a,
 {
     let line = lines.into_iter().nth(0).ok_or(util::Error)?.as_ref();
-    let mem: Vec<i32> =
-        util::parse_many(&line.split(',').map(|s| s.clone()).collect::<Vec<&str>>())?;
-    return Ok(itertools::max(
+    let mem: Vec<i32> = util::parse_many(&line.split(',').collect::<Vec<&str>>())?;
+    Ok(itertools::max(
         (5..10)
             .permutations(5)
             .filter_map(|order| amplify(&mem, &order).transpose())
             .collect::<Result<Vec<i32>, _>>()?,
     )
-    .ok_or(util::Error)?);
+    .ok_or(util::Error)?)
 }
