@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 import fileinput
-import functools
 import itertools
-
+import operator
 import re
 
 PATTERN = re.compile(r'-?\d+')
@@ -15,41 +13,27 @@ def lcm(x, y):
     return x // b * y
 
 
-def sign(n):
-    return -1 if n < 0 else 1 if n > 0 else 0
-
-
-def vector(line):
-    return Vector(*(int(s.group()) for s in re.finditer(PATTERN, line)))
-
-
-@dataclass
-class Vector:
-    x: int
-    y: int
-    z: int
-
-    def __add__(self, other):
-        return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def sign_to(self, other):
-        return Vector(sign(other.x - self.x), sign(other.y - self.y),
-                      sign(other.z - self.z))
-
-    def abs_sum(self):
-        return abs(self.x) + abs(self.y) + abs(self.z)
-
-
-def simulate(points):
-    velocities = [Vector(0, 0, 0) for _ in points]
-    n = 0
+def simulate(initialState):
+    points = [point for point, _ in initialState]
+    velocities = [velocity for _, velocity in initialState]
     while True:
         for i, p1 in enumerate(points):
-            velocities[i] = functools.reduce(
-                lambda acc, p2: acc + p1.sign_to(p2), points, velocities[i])
+            for p2 in points:
+                if p1 < p2:
+                    velocities[i] += 1
+                elif p1 > p2:
+                    velocities[i] -= 1
         for i, velocity in enumerate(velocities):
-            points[i] = points[i] + velocity
+            points[i] += velocity
         yield list(zip(points, velocities))
+
+
+def parse(lines):
+    axes = [[], [], []]
+    for line in lines:
+        for i, match in enumerate(PATTERN.finditer(line)):
+            axes[i].append((int(match.group()), 0))
+    return axes
 
 
 def part1(lines, n=1000):
@@ -59,9 +43,15 @@ def part1(lines, n=1000):
     >>> part1(["<x=-8, y=-10, z=0>", "<x=5, y=5, z=10>", "<x=2, y=-7, z=3>", "<x=9, y=-8, z=-3>"], 100)
     1940
     '''
-    points = list(map(vector, lines))
-    return sum(p.abs_sum() * v.abs_sum()
-               for p, v in next(itertools.islice(simulate(points), n - 1, n)))
+    axes = parse(lines)
+    potentials = [0, 0, 0, 0]
+    kinetics = [0, 0, 0, 0]
+    for axis in axes:
+        for i, (position, velocity) in enumerate(
+                next(itertools.islice(simulate(axis), n - 1, n))):
+            potentials[i] += abs(position)
+            kinetics[i] += abs(velocity)
+    return sum(map(operator.mul, potentials, kinetics))
 
 
 def part2(lines):
@@ -71,18 +61,14 @@ def part2(lines):
     >>> part2(["<x=-8, y=-10, z=0>", "<x=5, y=5, z=10>", "<x=2, y=-7, z=3>", "<x=9, y=-8, z=-3>"])
     4686774924
     '''
-    points = list(map(vector, lines))
-    seenX, seenY, seenZ = set(), set(), set()
-    for state in simulate(points):
-        stateX = tuple((p.x, v.x) for p, v in state)
-        stateY = tuple((p.y, v.y) for p, v in state)
-        stateZ = tuple((p.z, v.z) for p, v in state)
-        if stateX in seenX and stateY in seenY and stateZ in seenZ:
-            break
-        seenX.add(stateX)
-        seenY.add(stateY)
-        seenZ.add(stateZ)
-    return lcm(len(seenX), lcm(len(seenY), len(seenZ)))
+    axes = parse(lines)
+    result = 1
+    for axis in axes:
+        for i, state in enumerate(simulate(axis)):
+            if axis == state:
+                result = lcm(result, i + 1)
+                break
+    return result
 
 
 parts = (part1, part2)
