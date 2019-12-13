@@ -7,24 +7,24 @@ use std::mem;
 use std::ops::AddAssign;
 use std::str::FromStr;
 
-struct Simulation2<T> {
+struct Simulation<T> {
     points: Vec<T>,
     velocities: Vec<T>,
 }
 
-impl<T> Simulation2<T>
+impl<T> Simulation<T>
 where
     T: Clone + Default,
 {
-    fn new(points: &[T]) -> Simulation2<T> {
-        Simulation2 {
+    fn new(points: &[T]) -> Simulation<T> {
+        Simulation {
             points: points.to_vec(),
             velocities: points.iter().map(|_| T::default()).collect(),
         }
     }
 }
 
-impl<T> Iterator for Simulation2<T>
+impl<T> Iterator for Simulation<T>
 where
     T: Clone + Ord + From<i32> + AddAssign,
 {
@@ -62,7 +62,7 @@ fn lcm(x: u64, y: u64) -> u64 {
     x / b * y
 }
 
-fn parse2<'a, I, S, T>(lines: I) -> Result<Vec<Vec<T>>, <T as FromStr>::Err>
+fn parse<'a, I, S, T>(lines: I) -> Result<Vec<Vec<T>>, <T as FromStr>::Err>
 where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
@@ -90,9 +90,9 @@ where
     S: AsRef<str> + 'a,
 {
     Ok(util::transpose(
-        parse2::<_, _, i32>(lines)?
+        parse::<_, _, i32>(lines)?
             .iter()
-            .filter_map(|axis| Simulation2::new(axis).nth(999)),
+            .filter_map(|axis| Simulation::new(axis).nth(999)),
     )
     .map(|axes| {
         i32::sum(axes.iter().map(|(p, _)| p.abs())) * i32::sum(axes.iter().map(|(_, v)| v.abs()))
@@ -105,10 +105,10 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    Ok(parse2::<_, _, i32>(lines)?.iter().fold(1, |acc, points| {
+    Ok(parse::<_, _, i32>(lines)?.iter().fold(1, |acc, points| {
         lcm(
             acc,
-            Simulation2::new(points)
+            Simulation::new(points)
                 .position(|state| {
                     state
                         .iter()
