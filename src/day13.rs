@@ -5,9 +5,9 @@ use std::collections::HashSet;
 use std::error;
 
 enum State {
-    PendingX,
-    PendingY,
-    PendingOutput,
+    X,
+    Y,
+    Output,
 }
 
 struct Draw {
@@ -24,20 +24,20 @@ impl intcode::Environment<i64, intcode::Error> for Draw {
 
     fn output(&mut self, value: i64) -> Result<(), intcode::Error> {
         match self.state {
-            State::PendingX => {
+            State::X => {
                 self.x = value;
-                self.state = State::PendingY;
+                self.state = State::Y;
             }
-            State::PendingY => {
+            State::Y => {
                 self.y = value;
-                self.state = State::PendingOutput;
+                self.state = State::Output;
             }
-            State::PendingOutput => {
+            State::Output => {
                 match value {
                     2 => self.blocks.insert((self.x, self.y)),
                     _ => self.blocks.remove(&(self.x, self.y)),
                 };
-                self.state = State::PendingX;
+                self.state = State::X;
             }
         };
         Ok(())
@@ -67,15 +67,15 @@ impl intcode::Environment<i64, intcode::Error> for Bot {
 
     fn output(&mut self, value: i64) -> Result<(), intcode::Error> {
         match self.state {
-            State::PendingX => {
+            State::X => {
                 self.x = value;
-                self.state = State::PendingY;
+                self.state = State::Y;
             }
-            State::PendingY => {
+            State::Y => {
                 self.y = value;
-                self.state = State::PendingOutput;
+                self.state = State::Output;
             }
-            State::PendingOutput => {
+            State::Output => {
                 if self.x == -1 && self.y == 0 {
                     self.score = Some(value);
                 } else if value == 3 {
@@ -83,7 +83,7 @@ impl intcode::Environment<i64, intcode::Error> for Bot {
                 } else if value == 4 {
                     self.ball = Some(self.x);
                 }
-                self.state = State::PendingX;
+                self.state = State::X;
             }
         };
         Ok(())
@@ -101,7 +101,7 @@ where
         blocks: HashSet::new(),
         x: 0,
         y: 0,
-        state: State::PendingX,
+        state: State::X,
     };
     Intcode::new(&mut mem).run(&mut draw)?;
     Ok(draw.blocks.len())
@@ -121,7 +121,7 @@ where
         score: None,
         x: 0,
         y: 0,
-        state: State::PendingX,
+        state: State::X,
     };
     Intcode::new(&mut mem).run(&mut bot)?;
     Ok(bot.score.ok_or(util::Error)?)
