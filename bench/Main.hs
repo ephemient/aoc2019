@@ -65,7 +65,7 @@ main = defaultMain
       , bench "part 2" $ nf day11b input
       ]
   , env (getDayInput 12) $ \input -> bgroup "Day 12"
-      [ bench "part 1" $ nf day12a input
+      [ bench "part 1" $ nf (fmap (!! 1000) . day12a) input
       , bench "part 2" $ nf day12b input
       ]
   ]
