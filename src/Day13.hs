@@ -7,8 +7,7 @@ module Day13 (day13a, day13b) where
 
 import Control.Monad.Fix (fix)
 import Control.Monad.ST (runST)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map (elems, empty, insert, lookup)
+import qualified Data.Set as Set (delete, empty, insert, size)
 import Data.Vector.Generic (Vector, (//), fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Intcode (Context(..), step)
@@ -20,40 +19,45 @@ import Text.Megaparsec.Char.Lexer (decimal, signed)
 parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
 parser = fromList <$> (signed (return ()) decimal `sepBy` char ',' <* space)
 
-play :: (Integral e, Ord e, Vector v e, Show e) => v e -> Map (e, e) e
-play mem0 = runST $ do
+play :: (Integral e, Ord e, Vector v e, Show e) =>
+    (e -> e -> e -> a -> a) -> a -> v e -> a
+play f acc mem0 = runST $ do
     mem <- memory mem0
-    let context0 display paddle ball = fix $ \context -> Context
+    let context0 acc' paddle ball = fix $ \context -> Context
           { next = step mem context
-          , output = step mem . context1 display paddle ball
-          , terminate = \_ _ _ -> return display
+          , output = step mem . context1 acc' paddle ball
+          , terminate = \_ _ _ -> return acc'
           }
-        context1 display paddle ball x = fix $ \context -> Context
+        context1 acc' paddle ball x = fix $ \context -> Context
           { next = step mem context
-          , output = step mem . context2 display paddle ball x
-          , terminate = \_ _ _ -> return display
+          , output = step mem . context2 acc' paddle ball x
+          , terminate = \_ _ _ -> return acc'
           }
-        context2 display paddle ball x y = fix $ \context -> Context
+        context2 acc' paddle ball x y = fix $ \context -> Context
           { next = step mem context
           , output = \e _ base ip -> do
-                let display' = Map.insert (x, y) e display
+                let acc'' = f x y e acc'
                     paddle' = if e == 3 then Just x else paddle
                     ball' = if e == 4 then Just x else ball
                     input = case compare <$> paddle' <*> ball' of
                         Just LT -> repeat 1
                         Just GT -> repeat (-1)
                         _ -> repeat 0
-                step mem (context0 display' paddle' ball') input base ip
-          , terminate = \_ _ _ -> return display
+                step mem (context0 acc'' paddle' ball') input base ip
+          , terminate = \_ _ _ -> return acc'
           }
-    step mem (context0 Map.empty Nothing Nothing) (repeat 0) 0 0
+    step mem (context0 acc Nothing Nothing) (repeat 0) 0 0
 
 day13a :: String -> Either (ParseErrorBundle String ()) Int
 day13a input = do
     mem0 <- parse (parser @Unboxed.Vector @Int) "" input
-    return $ length $ filter (== 2) $ Map.elems $ play mem0
+    let f x y 2 = Set.insert (x, y)
+        f x y _ = Set.delete (x, y)
+    return $ Set.size $ play f Set.empty mem0
 
 day13b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
 day13b input = do
     mem0 <- parse (parser @Unboxed.Vector @Int) "" input
-    return $ Map.lookup (-1, 0) $ play $ mem0 // [(0, 2)]
+    let f (-1) 0 = const . Just
+        f _ _ = const id
+    return $ play f Nothing $ mem0 // [(0, 2)]
