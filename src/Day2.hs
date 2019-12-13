@@ -59,8 +59,8 @@ instance (Real i) => Real (XY i) where
     toRational (XY 0 0 c) = toRational c
     toRational _ = 0
 instance (Integral i) => Integral (XY i) where
-    XY 0 0 c1 `quotRem` XY 0 0 c2
-      = let (q, r) = quotRem c1 c2 in (XY 0 0 q, XY 0 0 r)
+    XY 0 0 c1 `quotRem` XY 0 0 c2 =
+        let (q, r) = quotRem c1 c2 in (XY 0 0 q, XY 0 0 r)
     quotRem _ _ = (XYError, XYError)
     toInteger (XY 0 0 c) = toInteger c
     toInteger _ = 0
