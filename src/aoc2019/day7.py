@@ -22,8 +22,8 @@ async def amplify(mem, order):
         await channel.put(n)
     await channels[0].put(0)
     for input, output in zip(channels, channels[1:]):
-        asyncio.create_task(intcode.run_async(mem[:], input, output))
-    return await intcode.run_async(mem[:], channels[-1], channels[0])
+        asyncio.create_task(intcode.run_async(mem[:], input.get, output.put))
+    return await intcode.run_async(mem[:], channels[-1].get, channels[0].put)
 
 
 async def max_order(mem, orders):

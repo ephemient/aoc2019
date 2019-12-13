@@ -3,33 +3,36 @@ import asyncio
 import fileinput
 
 
+class Bot:
+    def __init__(self, start):
+        self.grid = {(0, 0): start}
+        self.x = 0
+        self.y = 0
+        self.dx = 0
+        self.dy = 1
+        self.turning = False
+
+    async def input(self):
+        return int(self.grid.get((self.x, self.y), False))
+
+    async def output(self, value):
+        if self.turning:
+            if value:
+                self.dx, self.dy = self.dy, -self.dx
+            else:
+                self.dx, self.dy = -self.dy, self.dx
+            self.x += self.dx
+            self.y += self.dy
+            self.turning = False
+        else:
+            self.grid[(self.x, self.y)] = bool(value)
+            self.turning = True
+
+
 async def walk(mem, start):
-    input = asyncio.Queue()
-    output = asyncio.Queue()
-
-    async def work():
-        grid = {}
-        x, y = 0, 0
-        dx, dy = 0, 1
-        await input.put(int(start))
-        while True:
-            color = await output.get()
-            if color is None:
-                break
-            grid[(x, y)] = bool(color)
-            turn = await output.get()
-            if turn is None:
-                break
-            dx, dy = (dy, -dx) if turn else (-dy, dx)
-            x += dx
-            y += dy
-            await input.put(int(grid.get((x, y), False)))
-        return grid
-
-    result = asyncio.create_task(work())
-    await intcode.run_async(mem, input, output)
-    await output.put(None)
-    return await result
+    bot = Bot(start)
+    await intcode.run_async(mem, bot.input, bot.output)
+    return bot.grid
 
 
 def part1(lines):

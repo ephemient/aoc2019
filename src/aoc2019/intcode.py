@@ -1,7 +1,23 @@
 import asyncio
 
 
-def run(mem, raw_input):
+class async_next:
+    def __init__(self, iterable):
+        self.iterator = iter(iterable)
+
+    async def __call__(self):
+        return next(self.iterator)
+
+
+class async_collector:
+    def __init__(self):
+        self.result = []
+
+    async def __call__(self, value):
+        self.result.append(value)
+
+
+def run(mem, input):
     '''
     >>> run([3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8], [7])
     [0]
@@ -53,14 +69,9 @@ def run(mem, raw_input):
     [1125899906842624]
     '''
     async def async_work():
-        input, output = asyncio.Queue(), asyncio.Queue()
-        for value in raw_input:
-            await input.put(value)
-        await run_async(mem, input, output)
-        raw_output = []
-        while not output.empty():
-            raw_output.append(await output.get())
-        return raw_output
+        output = async_collector()
+        await run_async(mem, async_next(input), output)
+        return output.result
 
     return asyncio.run(async_work())
 
@@ -106,11 +117,11 @@ async def run_async(mem, input, output):
             set_arg(3, get_arg(1) * get_arg(2))
             ip += 4
         elif op == 3:
-            set_arg(1, await input.get())
+            set_arg(1, await input())
             ip += 2
         elif op == 4:
             last_output = get_arg(1)
-            await output.put(last_output)
+            await output(last_output)
             ip += 2
         elif op == 5:
             ip = get_arg(2) if get_arg(1) else ip + 3
