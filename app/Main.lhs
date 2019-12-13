@@ -97,6 +97,10 @@ import Day11 (day11a, day11b)
 ```haskell
 import Day12 (day12a, day12b)
 ```
+## [Day 13: Care Package](/src/Day13.hs)
+```haskell
+import Day13 (day13a, day13b)
+```
 
 ---
 
@@ -139,4 +143,5 @@ main = do
     run 10 print [day10a, (!! 199) . day10b]
     run 11 (putStrLn . showError id) [fmap show . day11a, day11b]
     run 12 (putStrLn . showError show) [fmap (!! 1000) . day12a, day12b]
+    run 13 (putStrLn . showError (maybeBottom show)) [fmap Just . day13a, day13b]
 ```
