@@ -3,6 +3,7 @@ Module:         Day2
 Description:    <https://adventofcode.com/2019/day/2 Day 2: 1202 Program Alarm>
 -}
 {-# LANGUAGE FlexibleContexts, NamedFieldPuns, RecordWildCards, TypeApplications #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Day2 (day2a, day2b) where
 
 import Control.Monad (unless)
@@ -10,7 +11,9 @@ import Control.Monad.ST (ST, runST)
 import Data.Array.ST (STArray, STUArray, readArray, thaw, writeArray)
 import Data.Array.Unboxed (Array, IArray, UArray, listArray)
 import Data.Ix (inRange)
-import Intcode.Array (run)
+import Intcode (Memory(..))
+import qualified Intcode (run)
+import qualified Intcode.Array (run)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char, space)
 import Text.Megaparsec.Char.Lexer (decimal)
@@ -29,7 +32,7 @@ day2a input = do
         writeArray mem 2 2
         [] <- run' mem []
         readArray mem 0
-  where run' = run :: STUArray s Int Int -> [Int] -> ST s [Int]
+  where run' = Intcode.Array.run :: STUArray s Int Int -> [Int] -> ST s [Int]
 
 data XY i = XY {x :: !i, y :: !i, c :: !i} | XYError
 instance (Num i, Eq i) => Num (XY i) where
@@ -47,35 +50,33 @@ instance (Num i, Eq i) => Num (XY i) where
     negate _ = XYError
 instance (Eq i) => Eq (XY i) where
     XY _ _ c1 == XY _ _ c2 = c1 == c2
-    _ == _ = True
 instance (Ord i) => Ord (XY i) where
     XY _ _ c1 `compare` XY _ _ c2 = compare c1 c2
-    compare _ _ = EQ
 instance (Enum i, Eq i, Num i) => Enum (XY i) where
     toEnum = XY 0 0 . toEnum
     fromEnum (XY 0 0 c) = fromEnum c
-    fromEnum _ = 0
 instance (Real i) => Real (XY i) where
     toRational (XY 0 0 c) = toRational c
-    toRational _ = 0
 instance (Integral i) => Integral (XY i) where
     XY 0 0 c1 `quotRem` XY 0 0 c2 =
         let (q, r) = quotRem c1 c2 in (XY 0 0 q, XY 0 0 r)
     quotRem _ _ = (XYError, XYError)
     toInteger (XY 0 0 c) = toInteger c
-    toInteger _ = 0
 
 day2b :: String -> Either (ParseErrorBundle String ()) Int
 day2b input = do
     mem0 <- parse (parser @Array @(XY Int)) "" input
     return $ runST $ do
-        mem <- thaw mem0
+        mem <- thaw' mem0
         writeArray mem 1 $ XY 1 0 0
         writeArray mem 2 $ XY 0 1 0
-        [] <- run' mem []
+        let readMem (XY 0 0 c) = readArray mem c
+            readMem _ = return XYError
+            writeMem = writeArray mem . fromIntegral
+        [] <- Intcode.run Memory {..} []
         XY {x = m, y = n, c} <- readArray mem 0
         unless (n == 1) $ fail "unhandled"
         let (x, y) = (19690720 - c) `quotRem` m
         unless (inRange (0, 99) x && inRange (0, 99) y) $ fail "unexpected"
         return $ 100 * x + y
-  where run' = run :: STArray s Int (XY Int) -> [XY Int] -> ST s [XY Int]
+  where thaw' = thaw :: Array Int (XY Int) -> ST s (STArray s Int (XY Int))
