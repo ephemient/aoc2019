@@ -1,16 +1,10 @@
 import fileinput
+import math
 import itertools
 import operator
 import re
 
 PATTERN = re.compile(r'-?\d+')
-
-
-def lcm(x, y):
-    a, b = x, y
-    while a:
-        a, b = b % a, a
-    return x // b * y
 
 
 def simulate(initialState):
@@ -66,7 +60,7 @@ def part2(lines):
     for axis in axes:
         for i, state in enumerate(simulate(axis)):
             if axis == state:
-                result = lcm(result, i + 1)
+                result = result // math.gcd(result, i + 1) * (i + 1)
                 break
     return result
 
