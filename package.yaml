@@ -28,9 +28,10 @@ library:
   - array
   - containers
   - megaparsec
-  - mtl
+  - monad-loops
   - primitive
   - split
+  - transformers
   - vector
 
 executables:

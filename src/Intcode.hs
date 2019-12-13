@@ -1,23 +1,49 @@
-{-# LANGUAGE LambdaCase, NamedFieldPuns, RecordWildCards #-}
-module Intcode (Context(..), Memory(..), run, step) where
+{-# LANGUAGE LambdaCase, NamedFieldPuns, TupleSections, RecordWildCards #-}
+module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, run, runIntcodeT, setInput) where
+
+import Control.Monad.Loops (unfoldM)
+import Control.Monad.Fix (fix)
+import Control.Monad.Trans.Class (MonadTrans(..))
+import Data.Functor (($>))
 
 data Memory m e = Memory { readMem :: e -> m e , writeMem :: e -> e -> m () }
 
-data Context m e a = Context
-  { next :: [e] -> e -> e -> m a
-  , output :: e -> [e] -> e -> e -> m a
-  , terminate :: [e] -> e -> e -> m a
-  }
+data State m e = State { input :: m e, base :: e, ip :: e }
 
-run :: (Monad m, Integral e) => Memory m e -> [e] -> m [e]
-run memory = flip next 0 `flip` 0 where
-    next = step memory Context {..}
-    output e input base ip = (e:) <$> next input base ip
-    terminate _ _ _ = return []
+newtype IntcodeT e m a = IntcodeT {
+    runIntcodeT
+        :: Memory m e
+        -> State (IntcodeT e m) e
+        -> m (State (IntcodeT e m) e, a)
+}
 
-step :: (Monad m, Integral e) =>
-    Memory m e -> Context m e a -> [e] -> e -> e -> m a
-step Memory {..} Context {..} input base ip = do
+evalIntcodeT :: (Functor m, Num e) =>
+    IntcodeT e m a -> Memory m e -> IntcodeT e m e -> m a
+evalIntcodeT intcode mem input =
+    snd <$> runIntcodeT intcode mem State { base = 0, ip = 0, .. }
+
+instance (Functor m) => Functor (IntcodeT e m) where
+    fmap f IntcodeT {..} = IntcodeT $ \mem s -> fmap f <$> runIntcodeT mem s
+
+instance (Monad m) => Applicative (IntcodeT e m) where
+    pure a = IntcodeT $ const $ pure . (, a)
+    IntcodeT runF <*> IntcodeT runA = IntcodeT $ \mem s -> do
+        (s', f) <- runF mem s
+        (s'', a) <- runA mem s'
+        pure (s'', f a)
+
+instance (Monad m) => Monad (IntcodeT e m) where
+    IntcodeT runA >>= f = IntcodeT $ \mem s -> do
+        (s', a) <- runA mem s
+        runIntcodeT (f a) mem s'
+
+instance MonadTrans (IntcodeT e) where lift m = IntcodeT $ \_ s -> (s,) <$> m
+
+setInput :: (Monad m) => IntcodeT e m e -> IntcodeT e m ()
+setInput input = IntcodeT $ \_ s -> return (s {input}, ())
+
+getOutput :: (Monad m, Integral e) => IntcodeT e m (Maybe e)
+getOutput = IntcodeT $ \mem@Memory {..} -> fix $ \runOutput state@State {..} -> do
     op <- fromIntegral <$> readMem ip
     let arg n = case op `quot` 10 ^ (n + 1 :: Int) `rem` 10 :: Int of
             0 -> readMem (ip + fromIntegral n)
@@ -28,20 +54,26 @@ step Memory {..} Context {..} input base ip = do
         putArg n v = arg n >>= flip writeMem v
         binOp f = do
             f <$> getArg 1 <*> getArg 2 >>= putArg 3
-            next input base $ ip + 4
+            runOutput state {ip = ip + 4}
         jmp p = p <$> getArg 1 >>= \case
-            False -> next input base $ ip + 3
-            True -> getArg 2 >>= next input base
+            False -> runOutput state {ip = ip + 3}
+            True -> getArg 2 >>= \ip' -> runOutput state {ip = ip'}
     case op `rem` 100 of
         1 -> binOp (+)
         2 -> binOp (*)
-        3 | i:input' <- input -> putArg 1 i >> next input' base (ip + 2)
-          | otherwise -> fail "no input"
-        4 -> getArg 1 >>= flip output input `flip` base `flip` (ip + 2)
+        3 -> do (state', v) <- runIntcodeT input mem state
+                putArg 1 v
+                runOutput state' {ip = ip + 2}
+        4 -> (state {ip = ip + 2},) . Just <$> getArg 1
         5 -> jmp (/= 0)
         6 -> jmp (== 0)
         7 -> binOp $ \x y -> if x < y then 1 else 0
         8 -> binOp $ \x y -> if x == y then 1 else 0
-        9 -> getArg 1 >>= (next input `flip` (ip + 2)) . (+) base
-        99 -> terminate input base ip
+        9 -> getArg 1 >>= \v -> runOutput state {base = base + v, ip = ip + 2}
+        99 -> return (state, Nothing)
         _ -> fail "bad opcode"
+
+run :: (Monad m, Integral e) => Memory m e -> [e] -> m [e]
+run mem = evalIntcodeT (unfoldM getOutput) mem . getInput where
+    getInput (i:input) = setInput (getInput input) $> i
+    getInput _ = fail "no input"
