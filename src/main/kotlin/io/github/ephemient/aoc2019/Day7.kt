@@ -34,9 +34,10 @@ class Day7(lines: List<String>) {
                 }
                 channels.first().send(0)
                 channels.zipWithNext() { input, output ->
-                    launch { Intcode(mem.toMutableList()).runAsync(input, output) }
+                    launch { Intcode(mem.toMutableList()).runAsync(input::receive, output::send) }
                 }
-                Intcode(mem.toMutableList()).runAsync(channels.last(), channels.first())
+                Intcode(mem.toMutableList())
+                    .runAsync(channels.last()::receive, channels.first()::send)
             }
 
         fun <T> List<T>.permutations(): Iterable<List<T>> = sequence<List<T>> {

@@ -1,12 +1,6 @@
 package io.github.ephemient.aoc2019
 
 import com.google.common.math.IntMath
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.toList
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class Intcode(private val mem: MutableList<Long>) {
@@ -35,21 +29,16 @@ class Intcode(private val mem: MutableList<Long>) {
     }
 
     fun runBlocking(input: Iterable<Long>): List<Long> = runBlocking {
-        val inputChannel = Channel<Long>()
-        val outputChannel = Channel<Long>()
-        launch {
-            for (value in input) {
-                inputChannel.send(value)
-            }
+        mutableListOf<Long>().apply {
+            runAsync(
+                input = with(input.iterator()) { suspend { next() } },
+                output = { add(it) }
+            )
         }
-        val deferredOutput = async { outputChannel.toList() }
-        runAsync(inputChannel, outputChannel)
-        outputChannel.close()
-        deferredOutput.await()
     }
 
     @Suppress("ComplexMethod")
-    suspend fun runAsync(input: ReceiveChannel<Long>, output: SendChannel<Long>): Long? {
+    suspend fun runAsync(input: suspend () -> Long, output: suspend (Long) -> Unit): Long? {
         var ip = 0
         var base = 0
         var lastOutput: Long? = null
@@ -64,11 +53,11 @@ class Intcode(private val mem: MutableList<Long>) {
                     ip += 4
                 }
                 3 -> {
-                    mem[ip, base, 1] = input.receive()
+                    mem[ip, base, 1] = input()
                     ip += 2
                 }
                 4 -> {
-                    output.send(mem[ip, base, 1].also { lastOutput = it })
+                    output(mem[ip, base, 1].also { lastOutput = it })
                     ip += 2
                 }
                 5 -> ip = if (mem[ip, base, 1] != 0L) mem[ip, base, 2].toInt() else ip + 3
