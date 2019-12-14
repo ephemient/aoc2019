@@ -6,6 +6,7 @@ Description:    <https://adventofcode.com/2019/day/4 Day 4: Secure Container>
 module Day4 (day4a, day4b) where
 
 import Data.List (group)
+import Data.Void (Void)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, count, notFollowedBy, parse)
 import Text.Megaparsec.Char (char, digitChar, space)
 
@@ -35,13 +36,13 @@ nonDecreasingRange bounds (start, end) =
     takeWhile ((/= LT) . rightAlignedCompare end) .
     iterate (nextNonDecreasing bounds) $ makeNonDecreasing start
 
-day4a :: String -> Either (ParseErrorBundle String ()) Int
+day4a :: String -> Either (ParseErrorBundle String Void) Int
 day4a input = length . filter ok . nonDecreasingRange ('1', '9') <$>
     parse parser "" input where
     ok xs@(_:ys) = or $ zipWith (==) xs ys
     ok _ = False
 
-day4b :: String -> Either (ParseErrorBundle String ()) Int
+day4b :: String -> Either (ParseErrorBundle String Void) Int
 day4b input = length . filter ok . nonDecreasingRange ('1', '9') <$>
     parse parser "" input where
     ok = any (\case [_, _] -> True; _ -> False) . group

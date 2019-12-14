@@ -11,6 +11,7 @@ import Data.Vector.Generic (Vector, (//), fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Intcode (evalIntcodeT, getOutput, setInput)
 import Intcode.Vector (memory)
+import Data.Void (Void)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char, space)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
@@ -35,14 +36,14 @@ play f acc mem0 = runST $ do
             loop acc'' paddle' ball'
     evalIntcodeT (loop acc Nothing Nothing) mem $ return 0
 
-day13a :: String -> Either (ParseErrorBundle String ()) Int
+day13a :: String -> Either (ParseErrorBundle String Void) Int
 day13a input = do
     mem0 <- parse (parser @Unboxed.Vector @Int) "" input
     let f x y 2 = Set.insert (x, y)
         f x y _ = Set.delete (x, y)
     return $ Set.size $ play f Set.empty mem0
 
-day13b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day13b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day13b input = do
     mem0 <- parse (parser @Unboxed.Vector @Int) "" input
     let f (-1) 0 = const . Just

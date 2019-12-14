@@ -7,6 +7,7 @@ module Day14 (day14a, day14b) where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (filterWithKey, findWithDefault, fromList, insert, lookup, lookupMin, singleton, unionWith)
+import Data.Void (Void)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy, sepEndBy, some)
 import Text.Megaparsec.Char (alphaNumChar, newline, space, string)
 import Text.Megaparsec.Char.Lexer (decimal)
@@ -32,10 +33,10 @@ produce rules = expand . Map.singleton "FUEL" where
     needed "ORE" _ = False
     needed _ n = n > 0
 
-day14a :: String -> Either (ParseErrorBundle String ()) Int
+day14a :: String -> Either (ParseErrorBundle String Void) Int
 day14a = fmap (`produce` 1) . parse parser ""
 
-day14b :: String -> Either (ParseErrorBundle String ()) Int
+day14b :: String -> Either (ParseErrorBundle String Void) Int
 day14b input = do
     rules <- parse parser "" input
     let target = 1000000000000

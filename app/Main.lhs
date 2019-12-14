@@ -109,20 +109,22 @@ import Day14 (day14a, day14b)
 ---
 
 ```haskell
-import Control.Monad (when)
+import Control.Monad ((<=<), when)
 import Data.Maybe (mapMaybe)
 import Paths_aoc2019 (getDataFileName)
 import System.Environment (getArgs)
+import Text.Megaparsec (ParseErrorBundle, ShowErrorComponent, Stream, errorBundlePretty)
 import Text.Read (readMaybe)
 
 getDayInput :: Int -> IO String
 getDayInput i = getDataFileName ("day" ++ show i ++ ".txt") >>= readFile
 
-maybeBottom :: (a -> String) -> Maybe a -> String
-maybeBottom = maybe "(⊥)"
+justOrFail :: (Monad m) => Maybe a -> m a
+justOrFail = maybe (fail "(⊥)") return
 
-showError :: (Show a) => (b -> String) -> Either a b -> String
-showError = either (\err -> "(" ++ show err ++ ")")
+rightOrFail :: (ShowErrorComponent e, Stream s, Monad m) =>
+    Either (ParseErrorBundle s e) a -> m a
+rightOrFail = either (fail . errorBundlePretty) return
 
 run :: Int -> (a -> IO ()) -> [String -> a] -> IO ()
 run day showIO funcs = do
@@ -136,17 +138,17 @@ run day showIO funcs = do
 main :: IO ()
 main = do
     run 1 print [day1a, day1b]
-    run 2 (putStrLn . showError show) [day2a, day2b]
-    run 3 (putStrLn . showError (maybeBottom show)) [day3a, day3b]
-    run 4 (putStrLn . showError show) [day4a, day4b]
-    run 5 (putStrLn . showError (maybeBottom show)) [day5a, day5b]
-    run 6 (putStrLn . maybeBottom show) [day6a, day6b]
-    run 7 (putStrLn . showError (maybeBottom show)) [day7a, day7b]
+    run 2 (print <=< rightOrFail) [day2a, day2b]
+    run 3 (print <=< justOrFail <=< rightOrFail) [day3a, day3b]
+    run 4 (print <=< rightOrFail) [day4a, day4b]
+    run 5 (print <=< justOrFail <=< rightOrFail) [day5a, day5b]
+    run 6 (print <=< justOrFail) [day6a, day6b]
+    run 7 (print <=< justOrFail <=< rightOrFail) [day7a, day7b]
     run 8 putStrLn [show . day8a 25 6, day8b 25 6]
-    run 9 (putStrLn . showError (maybeBottom show)) [day9a, day9b]
+    run 9 (print <=< justOrFail <=< rightOrFail) [day9a, day9b]
     run 10 print [day10a, (!! 199) . day10b]
-    run 11 (putStrLn . showError id) [fmap show . day11a, day11b]
-    run 12 (putStrLn . showError show) [fmap (!! 1000) . day12a, day12b]
-    run 13 (putStrLn . showError (maybeBottom show)) [fmap Just . day13a, day13b]
-    run 14 (putStrLn . showError show) [day14a, day14b]
+    run 11 (putStrLn <=< rightOrFail) [fmap show . day11a, day11b]
+    run 12 (print <=< rightOrFail) [fmap (!! 1000) . day12a, day12b]
+    run 13 (print <=< justOrFail <=< rightOrFail) [fmap Just . day13a, day13b]
+    run 14 (print <=< rightOrFail) [day14a, day14b]
 ```

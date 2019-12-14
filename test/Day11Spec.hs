@@ -1,4 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
 module Day11Spec (spec) where
 
 import Day11 (day11a)

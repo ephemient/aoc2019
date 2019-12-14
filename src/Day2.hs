@@ -11,6 +11,7 @@ import Control.Monad.ST (ST, runST)
 import Data.Array.ST (STArray, STUArray, readArray, thaw, writeArray)
 import Data.Array.Unboxed (Array, IArray, UArray, listArray)
 import Data.Ix (inRange)
+import Data.Void (Void)
 import Intcode (Memory(..))
 import qualified Intcode (run)
 import qualified Intcode.Array (run)
@@ -23,7 +24,7 @@ parser = do
     ints <- decimal `sepBy` char ',' <* space
     return $ listArray (0, length ints - 1) ints
 
-day2a :: String -> Either (ParseErrorBundle String ()) Int
+day2a :: String -> Either (ParseErrorBundle String Void) Int
 day2a input = do
     mem0 <- parse (parser @UArray) "" input
     return $ runST $ do
@@ -63,7 +64,7 @@ instance (Integral i) => Integral (XY i) where
     quotRem _ _ = (XYError, XYError)
     toInteger (XY 0 0 c) = toInteger c
 
-day2b :: String -> Either (ParseErrorBundle String ()) Int
+day2b :: String -> Either (ParseErrorBundle String Void) Int
 day2b input = do
     mem0 <- parse (parser @Array @(XY Int)) "" input
     return $ runST $ do

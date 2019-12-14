@@ -13,6 +13,7 @@ import qualified Data.Map.Strict as Map (empty, filter, findWithDefault, insert,
 import qualified Data.Set as Set (elems, member)
 import Data.Vector.Generic (Vector, fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
+import Data.Void (Void)
 import Intcode (evalIntcodeT, getOutput, setInput)
 import Intcode.Vector (memory)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
@@ -35,10 +36,10 @@ walk start mem0 = runST $ do
             loop x' y' dx' dy' m'
     evalIntcodeT (loop 0 0 0 1 Map.empty) mem $ return $ bool 0 1 start
 
-day11a :: String -> Either (ParseErrorBundle String ()) Int
+day11a :: String -> Either (ParseErrorBundle String Void) Int
 day11a = fmap (Map.size . walk @Int @Unboxed.Vector False) . parse parser ""
 
-day11b :: String -> Either (ParseErrorBundle String ()) String
+day11b :: String -> Either (ParseErrorBundle String Void) String
 day11b input = do
     result <- Map.keysSet . Map.filter id . walk @Int @Unboxed.Vector True <$>
         parse parser "" input

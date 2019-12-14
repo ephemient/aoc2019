@@ -23,7 +23,7 @@ runArray ints input =
     flip Intcode.Array.run input
 
 runVector :: [Int] -> [Int] -> IO [Int]
-runVector ints input = Intcode.Vector.run (fromList ints) input
+runVector = Intcode.Vector.run . fromList
 
 spec :: Spec
 spec = do

@@ -13,6 +13,7 @@ import Data.List (foldl1', mapAccumL)
 import Data.Maybe (mapMaybe)
 import Data.List.NonEmpty (nonEmpty)
 import qualified Data.Set as Set (intersection, lookupMin, map, unions)
+import Data.Void (Void)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, choice, parse, sepBy, sepEndBy)
 import Text.Megaparsec.Char (char, space1)
 import Text.Megaparsec.Char.Lexer (decimal)
@@ -35,13 +36,13 @@ choose 0 _ = [[]]
 choose n (x:xs) = ((x :) <$> choose (n - 1) xs) ++ choose n xs
 choose _ [] = []
 
-day3a :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day3a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day3a input = Set.lookupMin . Set.unions .
     map (Set.map manhattan . foldl1' Set.intersection) . choose 2 .
     map Map.keysSet <$> parse parser "" input where
     manhattan (x, y) = abs x + abs y
 
-day3b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day3b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day3b input = minimum' .
     mapMaybe (minimum' . Map.elems . foldl1' (Map.intersectionWith (+))) .
     choose 2 <$> parse (parser @Int) "" input where

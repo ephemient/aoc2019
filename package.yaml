@@ -48,6 +48,7 @@ executables:
     dependencies:
     - aoc2019
     - markdown-unlit
+    - megaparsec
   day6-gen:
     main:                Main.hs
     source-dirs:         day6-gen

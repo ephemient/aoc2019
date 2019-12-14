@@ -14,6 +14,7 @@ import qualified Data.List.NonEmpty as NonEmpty (last)
 import Data.Maybe (mapMaybe)
 import Data.List.NonEmpty (nonEmpty)
 import qualified Data.Map.Lazy as Map (foldlWithKey, singleton)
+import Data.Void (Void)
 import Intcode (Memory(..), run)
 import Linear (Linear(..))
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
@@ -45,14 +46,14 @@ maxAmplify mem phases = do
     let outputs = resolve . evaluate <$> permutations amplifiers
     return . fmap maximum . nonEmpty $ NonEmpty.last <$> mapMaybe nonEmpty outputs
 
-day7a :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day7a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day7a input = do
     mem <- parse (parser @UArray) "" input
     let maxAmplify' :: forall s. [Int] -> ST s (Maybe Int)
         maxAmplify' = maxAmplify @(STArray s) mem
     return $ runST $ maxAmplify' [0..4]
 
-day7b :: String -> Either (ParseErrorBundle String ()) (Maybe Int)
+day7b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day7b input = do
     mem <- parse (parser @UArray) "" input
     let maxAmplify' :: forall s. [Int] -> ST s (Maybe Int)

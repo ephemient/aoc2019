@@ -7,6 +7,7 @@ module Day12 (day12a, day12b) where
 
 import Data.List (elemIndex, transpose)
 import Data.Maybe (catMaybes)
+import Data.Void (Void)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, between, parse, sepBy, sepEndBy, skipSome)
 import Text.Megaparsec.Char (alphaNumChar, char, newline, string)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
@@ -24,7 +25,7 @@ sim = iterate sim1 . map (, 0) where
       , let v' = v + sum [signum $ p' - p | (p', _) <- pvs]
       ]
 
-day12a :: String -> Either (ParseErrorBundle String ()) [Int]
+day12a :: String -> Either (ParseErrorBundle String Void) [Int]
 day12a input = do
     states <- transpose . map sim <$> parse parser "" input
     return
@@ -32,7 +33,7 @@ day12a input = do
       | moons <- transpose <$> states
       ]
 
-day12b :: String -> Either (ParseErrorBundle String ()) Int
+day12b :: String -> Either (ParseErrorBundle String Void) Int
 day12b input = do
     initial <- parse (parser @Int) "" input
     return . foldr (lcm . succ) 1 . catMaybes .
