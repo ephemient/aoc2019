@@ -27,7 +27,6 @@ library:
   dependencies:
   - array
   - containers
-  - glpk-hs
   - megaparsec
   - monad-loops
   - primitive

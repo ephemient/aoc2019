@@ -3,28 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    size: 17938
-    url: https://github.com/ephemient/glpk-hs/archive/b0de2bcec7e964172deee3a1830d00f6a1bef3e3.tar.gz
-    cabal-file:
-      size: 2626
-      sha256: 994607b85e00b21ef53dc0eb80cc0aaa33dd9400b1dd1ba02969e9cf731d5b22
-    name: glpk-hs
-    version: '0.7'
-    sha256: d1f22e50f6ea17c68a677de1d05dc4bec1c7810b8b956daf80d574caa5278bbc
-    pantry-tree:
-      size: 1707
-      sha256: 389c01931c34e87f62d4a7140abcedbdce74e0afe081ab9d42567d6426e86b6f
-  original:
-    url: https://github.com/ephemient/glpk-hs/archive/b0de2bcec7e964172deee3a1830d00f6a1bef3e3.tar.gz
-- completed:
-    hackage: gasp-1.2.0.0@sha256:588f9d470ed8e51ff3819b496d5a5a2f41c55b613fee7f5c59da6271e73ef7d3,697
-    pantry-tree:
-      size: 279
-      sha256: 0979d4c48cbd1dc7969c1b8e17f87529e1f2f490f0da8b3e094b59fd44e97b0e
-  original:
-    hackage: gasp-1.2.0.0
+packages: []
 snapshots:
 - completed:
     size: 524804

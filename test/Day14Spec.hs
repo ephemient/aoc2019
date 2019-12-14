@@ -1,7 +1,7 @@
 module Day14Spec (spec) where
 
 import Day14 (day14a, day14b)
-import Test.Hspec (Spec, describe, it, pendingWith, shouldReturn)
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 sample1, sample2, sample3, sample4, sample5 :: String
 sample1 = unlines
@@ -70,15 +70,13 @@ spec :: Spec
 spec = do
     describe "part 1" $
         it "examples" $ do
-            day14a sample1 `shouldReturn` 31
-            day14a sample2 `shouldReturn` 165
-            day14a sample3 `shouldReturn` 13312
-            day14a sample4 `shouldReturn` 180697
-            day14a sample5 `shouldReturn` 2210736
-    describe "part 2" $ do
-        it "failing examples" $ do
-            pendingWith "GLPK comes up short"
-            day14b sample3 `shouldReturn` 82892753
+            day14a sample1 `shouldBe` Right 31
+            day14a sample2 `shouldBe` Right 165
+            day14a sample3 `shouldBe` Right 13312
+            day14a sample4 `shouldBe` Right 180697
+            day14a sample5 `shouldBe` Right 2210736
+    describe "part 2" $
         it "examples" $ do
-            day14b sample4 `shouldReturn` 5586022
-            day14b sample5 `shouldReturn` 460664
+            day14b sample3 `shouldBe` Right 82892753
+            day14b sample4 `shouldBe` Right 5586022
+            day14b sample5 `shouldBe` Right 460664
