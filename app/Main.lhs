@@ -103,7 +103,7 @@ import Day13 (day13a, day13b)
 ```
 ## [Day 14: Space Stoichiometry](/src/Day14.hs)
 ```haskell
-import Day14 (day14a)
+import Day14 (day14a, day14b)
 ```
 
 ---
@@ -148,5 +148,5 @@ main = do
     run 11 (putStrLn . showError id) [fmap show . day11a, day11b]
     run 12 (putStrLn . showError show) [fmap (!! 1000) . day12a, day12b]
     run 13 (putStrLn . showError (maybeBottom show)) [fmap Just . day13a, day13b]
-    run 14 (putStrLn . showError show) [day14a]
+    run 14 (>>= print) [day14a, day14b]
 ```

@@ -5,7 +5,8 @@ module Linear (Linear(..)) where
 import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as Map
 
-data Linear a b = Linear { constant :: a, variables :: Map b a } deriving (Eq, Show)
+data Linear a b = Linear { constant :: a, variables :: Map b a }
+  deriving (Eq, Show)
 
 instance (Num a, Eq a, Ord b) => Num (Linear a b) where
     Linear c1 v1 + Linear c2 v2 = Linear (c1 + c2) $
