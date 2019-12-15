@@ -105,6 +105,10 @@ import Day13 (day13a, day13b)
 ```haskell
 import Day14 (day14a, day14b)
 ```
+## [Day 15: Oxygen System](/src/Day15.hs)
+```haskell
+import Day15 (day15a, day15b)
+```
 
 ---
 
@@ -151,4 +155,5 @@ main = do
     run 12 (print <=< rightOrFail) [fmap (!! 1000) . day12a, day12b]
     run 13 (print <=< justOrFail <=< rightOrFail) [fmap Just . day13a, day13b]
     run 14 (print <=< rightOrFail) [day14a, day14b]
+    run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
 ```

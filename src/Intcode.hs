@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase, NamedFieldPuns, TupleSections, RecordWildCards #-}
-module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, run, runIntcodeT, setInput) where
+module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, liftMemory, run, runIntcodeT, setInput) where
 
 import Control.Monad.Loops (unfoldM)
 import Control.Monad.Fix (fix)
@@ -16,6 +16,11 @@ newtype IntcodeT e m a = IntcodeT {
         -> State (IntcodeT e m) e
         -> m (State (IntcodeT e m) e, a)
 }
+
+liftMemory :: (MonadTrans t, Monad m, Monad (t m)) =>
+    Memory m e -> Memory (t m) e
+liftMemory Memory {..} =
+    Memory { readMem = lift . readMem, writeMem = (.) lift . writeMem }
 
 evalIntcodeT :: (Functor m, Num e) =>
     IntcodeT e m a -> Memory m e -> IntcodeT e m e -> m a
