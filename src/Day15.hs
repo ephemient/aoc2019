@@ -2,14 +2,14 @@
 Module:         Day15
 Description:    <https://adventofcode.com/2019/day/15 Day 15: Oxygen System>
 -}
-{-# LANGUAGE FlexibleContexts, LambdaCase, TupleSections, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, TupleSections, TypeApplications, ViewPatterns #-}
 module Day15 (day15a, day15b) where
 
 import Control.Monad.ST (runST)
 import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as Map (assocs, fromList, keys, keysSet, mapWithKey, restrictKeys)
+import qualified Data.Map.Lazy as Map (assocs, fromList, keysSet, mapWithKey, restrictKeys)
 import Data.Set (Set, (\\))
-import qualified Data.Set as Set (empty, insert, intersection, member, null, singleton, toList, unions)
+import qualified Data.Set as Set (empty, insert, intersection, member, minView,null, singleton, toList, union, unions)
 import Data.Sequence (Seq(..), (><), (|>))
 import qualified Data.Sequence as Seq (fromList, singleton)
 import Data.Vector.Generic (Vector)
@@ -64,7 +64,7 @@ explore :: (Num a, Ord a, Integral e, Monad m) =>
     IntcodeT e m (Maybe ((Set (a, a), (a, a))))
 explore = explore' (0, 0) Set.empty (Set.singleton (0, 0)) Nothing $
     neighbors' (0, 0) where
-    explore' pos wall pass oxy (target :<| queue)
+    explore' pos wall pass oxy (Set.minView -> Just (target, queue))
       | target `Set.member` wall || target `Set.member` pass
       = explore' pos wall pass oxy queue
       | otherwise = navigate pass pos target >>= \case
@@ -72,14 +72,14 @@ explore = explore' (0, 0) Set.empty (Set.singleton (0, 0)) Nothing $
                 explore' pos' (Set.insert target wall) pass oxy queue
             (pos', Just 1) ->
                 explore' pos' wall (Set.insert pos' pass) oxy $
-                    queue >< neighbors' pos'
+                    Set.union queue $ neighbors' pos'
             (pos', Just 2) | Nothing <- oxy ->
                 explore' pos' wall (Set.insert pos' pass) (Just pos') $
-                    queue >< neighbors' pos'
+                    Set.union queue $ neighbors' pos'
             _ -> return Nothing
     explore' _ _ pass (Just oxy) _ = return $ Just (pass, oxy)
     explore' _ _ _ _ _ = return Nothing
-    neighbors' = Seq.fromList . Map.keys . neighbors @Int
+    neighbors' = Map.keysSet . neighbors @Int
 
 flood :: (Num a, Ord a) => Set (a, a) -> (a, a) -> [Set (a, a)]
 flood pass = takeWhile (not . Set.null) . fmap snd . iterate flood' .
