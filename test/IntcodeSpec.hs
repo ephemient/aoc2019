@@ -3,11 +3,14 @@
 {-# HLINT ignore "Reduce duplication" #-}
 module IntcodeSpec (spec) where
 
+import Control.Monad.State (evalState)
 import Data.Array.IO (IOUArray, getElems, newListArray)
 import Data.Vector.Unboxed (fromList)
 import qualified Intcode.Array (run)
+import qualified Intcode.Lazy (memory)
 import qualified Intcode.Vector (run)
-import Test.Hspec (Spec, describe, it, shouldReturn)
+import qualified Intcode (run)
+import Test.Hspec (Spec, describe, it, shouldBe, shouldReturn)
 import Test.QuickCheck ((===), arbitrary)
 import Test.QuickCheck.Monadic (monadicIO, pick, run)
 
@@ -21,6 +24,10 @@ runArray :: [Int] -> [Int] -> IO [Int]
 runArray ints input =
     newListArray @IOUArray @Int @IO @Int (0, length ints - 1) ints >>=
     flip Intcode.Array.run input
+
+runLazy :: [Int] -> [Int] -> [Int]
+runLazy ints input =
+    evalState (Intcode.run Intcode.Lazy.memory input) $ fromList ints
 
 runVector :: [Int] -> [Int] -> IO [Int]
 runVector = Intcode.Vector.run . fromList
@@ -93,12 +100,18 @@ spec = do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [999 + fromEnum (compare x 8)]
-    describe "day 9 part 1" $
-        it "examples" $ do
-            let quine =
-                  [ 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006
-                  , 101, 0, 99
-                  ]
+    describe "day 9 part 1" $ do
+        let quine =
+              [ 109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006
+              , 101, 0, 99
+              ]
+        it "examples (lazy)" $ do
+            runLazy quine [] `shouldBe` quine
+            runLazy [1102, 34915192, 34915192, 7, 4, 7, 99, 0] [] `shouldBe`
+                [1219070632396864]
+            runLazy [104, 1125899906842624, 99] [] `shouldBe`
+                [1125899906842624]
+        it "examples (strict)" $ do
             runVector quine [] `shouldReturn` quine
             runVector [1102, 34915192, 34915192, 7, 4, 7, 99, 0] []
                 `shouldReturn` [1219070632396864]

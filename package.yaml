@@ -29,6 +29,7 @@ library:
   - containers
   - megaparsec
   - monad-loops
+  - mtl
   - primitive
   - split
   - transformers
@@ -77,6 +78,7 @@ tests:
     - aoc2019
     - array
     - hspec
+    - mtl
     - vector
 
 benchmarks:
