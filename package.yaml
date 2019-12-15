@@ -27,6 +27,7 @@ library:
   dependencies:
   - array
   - containers
+  - heap
   - megaparsec
   - monad-loops
   - mtl
