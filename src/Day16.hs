@@ -7,7 +7,7 @@ module Day16 (day16a, day16b) where
 
 import Data.Char (digitToInt, intToDigit, isDigit)
 import Data.List (foldl')
-import qualified Data.Vector.Generic as Vector (generate, map, postscanr', take, toList)
+import qualified Data.Vector.Generic as Vector (fromListN, map, postscanr', take, toList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 
 f :: [Int] -> [Int]
@@ -29,6 +29,6 @@ day16b (map digitToInt . filter isDigit -> input)
     offset = foldl' (\a b -> 10 * a + b) 0 $ take 7 input
     realLength = length input
     extendedLength = realLength * 10000
-    v0 = Vector.generate @Unboxed.Vector (extendedLength - offset) $
-        (input !!) . (`mod` realLength) . (offset +)
+    v0 = Vector.fromListN @Unboxed.Vector (extendedLength - offset) .
+        drop (offset `mod` realLength) $ cycle input
     g = Vector.map ((`mod` 10) . abs) . Vector.postscanr' (+) 0
