@@ -22,6 +22,7 @@ mod day7;
 mod day8;
 mod day9;
 mod day14;
+mod day15;
 mod intcode;
 mod util;
 
@@ -129,6 +130,13 @@ fn main() -> io::Result<()> {
         println!("Day 14");
         println!("{:?}", day14::part1(DAY14).map_err(util::to_ioerror)?);
         println!("{:?}", day14::part2(DAY14).map_err(util::to_ioerror)?);
+        println!();
+    }
+
+    if args.is_empty() || args.contains("15") {
+        println!("Day 15");
+        println!("{:?}", day15::part1(DAY15).map_err(util::to_ioerror)?);
+        println!("{:?}", day15::part2(DAY15).map_err(util::to_ioerror)?);
         println!();
     }
 
