@@ -6,17 +6,17 @@ class Day16(lines: List<String>) {
     private val input: List<Int> = lines.first().map { Character.digit(it, 10) }
 
     fun part1(times: Int = 100): String {
-        var value = input
+        val value = input.toIntArray()
         repeat(times) {
-            value = value.indices.map { i ->
-                var sum = 0
-                for ((j, v) in value.withIndex()) {
-                    when ((j + 1) % (4 * i + 4) / (i + 1)) {
-                        1 -> sum += v
-                        3 -> sum -= v
+            for (x in value.indices) {
+                var sign = true
+                value[x] = abs(
+                    (x until value.size step 2 * x + 2).sumBy { base ->
+                        (base until minOf(base + x + 1, value.size)).sumBy(value::get)
+                            .let { if (sign) it else -it }
+                            .also { sign = !sign }
                     }
-                }
-                abs(sum) % 10
+                ) % 10
             }
         }
         return value.take(8).joinToString("")
@@ -29,11 +29,8 @@ class Day16(lines: List<String>) {
         check(offset < newLength && newLength <= 2 * offset)
         val value = (offset until newLength).map { input[it % length] }.toIntArray()
         repeat(times) {
-            for (i in value.lastIndex downTo 1) {
-                value[i - 1] += value[i]
-            }
-            for (i in value.indices) {
-                value[i] = abs(value[i]) % 10
+            value.indices.reversed().fold(0) { acc, i ->
+                (abs(acc + value[i]) % 10).also { value[i] = it }
             }
         }
         return value.take(8).joinToString("")
