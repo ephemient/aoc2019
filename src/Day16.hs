@@ -9,7 +9,7 @@ import Control.Monad (foldM, forM_)
 import Data.Char (digitToInt, intToDigit, isDigit)
 import Data.List (foldl')
 import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector (fromList, fromListN, map, modify, postscanr', take, toList)
+import qualified Data.Vector.Generic as Vector (drop, fromList, fromListN, map, modify, postscanl', take, toList)
 import qualified Data.Vector.Generic.Mutable as MVector (length, read, write)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 
@@ -24,6 +24,9 @@ f = Vector.modify $ \v -> let n = MVector.length v in forM_ [0..n - 1] $ \i ->
       , then takeWhile by base + i < n
       ]
 
+g :: (Vector v e, Integral e) => v e -> v e
+g = Vector.map ((`mod` 10) . abs) . Vector.postscanl' (+) 0
+
 day16a :: String -> [String]
 day16a (map digitToInt . filter isDigit -> input) =
     map intToDigit . Vector.toList . Vector.take 8 <$> iterate f v0 where
@@ -31,12 +34,9 @@ day16a (map digitToInt . filter isDigit -> input) =
 
 day16b :: String -> [String]
 day16b (map digitToInt . filter isDigit -> input)
-  | offset + 8 < extendedLength && extendedLength <= 2 * offset
-  = map intToDigit . Vector.toList . Vector.take 8 <$> iterate g v0
+  | 8 <= n && n < offset = map intToDigit . reverse . Vector.toList .
+        Vector.drop (n - 8) <$> iterate g v0
   | otherwise = error "unimplemented!" where
     offset = foldl' (\a b -> 10 * a + b) 0 $ take 7 input
-    realLength = length input
-    extendedLength = realLength * 10000
-    v0 = Vector.fromListN @Unboxed.Vector (extendedLength - offset) .
-        drop (offset `mod` realLength) $ cycle input
-    g = Vector.map ((`mod` 10) . abs) . Vector.postscanr' (+) 0
+    n = length input * 10000 - offset
+    v0 = Vector.fromListN @Unboxed.Vector n . cycle $ reverse input
