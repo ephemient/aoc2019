@@ -2,7 +2,6 @@ use super::util;
 use regex::Regex;
 use std::cmp::Ordering;
 use std::error;
-use std::iter::Sum;
 use std::mem;
 use std::ops::AddAssign;
 use std::str::FromStr;
@@ -95,7 +94,8 @@ where
             .filter_map(|axis| Simulation::new(axis).nth(999)),
     )
     .map(|axes| {
-        i32::sum(axes.iter().map(|(p, _)| p.abs())) * i32::sum(axes.iter().map(|(_, v)| v.abs()))
+        axes.iter().map(|(p, _)| p.abs()).sum::<i32>()
+            * axes.iter().map(|(_, v)| v.abs()).sum::<i32>()
     })
     .sum())
 }

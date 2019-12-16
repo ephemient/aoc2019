@@ -3,7 +3,7 @@ use std::cmp;
 use std::collections::HashMap;
 use std::error;
 use std::hash::Hash;
-use std::iter::{self, Sum};
+use std::iter;
 
 struct Checksums<'a, T>
 where
@@ -29,7 +29,7 @@ where
             Some(cached) => *cached,
             _ => {
                 let value = match self.orbits.get_all(key) {
-                    Some(children) => i32::sum(children.iter().map(|x: &T| self.checksum(x) + 1)),
+                    Some(children) => children.iter().map(|x: &T| self.checksum(x) + 1).sum(),
                     _ => 0,
                 };
                 self.cache.insert(key.clone(), value);
@@ -53,7 +53,7 @@ where
         })
         .collect::<CollectingHashMap<_, _>>();
     let mut checksums = Checksums::new(&orbits);
-    Ok(i32::sum(orbits.keys().map(|x| checksums.checksum(x))))
+    Ok(orbits.keys().map(|x| checksums.checksum(x)).sum())
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<usize, Box<dyn error::Error + Send + Sync>>
