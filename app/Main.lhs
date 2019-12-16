@@ -160,5 +160,5 @@ main = do
     run 13 (print <=< justOrFail <=< rightOrFail) [fmap Just . day13a, day13b]
     run 14 (print <=< rightOrFail) [day14a, day14b]
     run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
-    run 16 (putStrLn . (!! 100)) [day16a, day16b]
+    run 16 putStrLn [(!! 100) . day16a, day16b]
 ```

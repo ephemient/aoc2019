@@ -86,6 +86,6 @@ main = defaultMain
       ]
   , env (getDayInput 16) $ \input -> bgroup "Day 16"
       [ bench "part 1" $ nf ((!! 100) . day16a) input
-      , bench "part 2" $ nf ((!! 100) . day16b) input
+      , bench "part 2" $ nf day16b input
       ]
   ]
