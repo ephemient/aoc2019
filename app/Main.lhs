@@ -109,6 +109,10 @@ import Day14 (day14a, day14b)
 ```haskell
 import Day15 (day15a, day15b)
 ```
+## [Day 16: Flawed Frequency Transmission](/src/Day16.hs)
+```haskell
+import Day16 (day16a, day16b)
+```
 
 ---
 
@@ -156,4 +160,5 @@ main = do
     run 13 (print <=< justOrFail <=< rightOrFail) [fmap Just . day13a, day13b]
     run 14 (print <=< rightOrFail) [day14a, day14b]
     run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
+    run 16 (putStrLn . (!! 100)) [day16a, day16b]
 ```
