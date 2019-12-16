@@ -34,10 +34,21 @@ class Day7(lines: List<String>) {
                 }
                 channels.first().send(0)
                 channels.zipWithNext() { input, output ->
-                    launch { Intcode(mem.toMutableList()).runAsync(input::receive, output::send) }
+                    launch {
+                        val vm = Intcode(mem.toMutableList())
+                        while (true) {
+                            output.send(vm.getOutput(input::receive) ?: break)
+                        }
+                    }
                 }
-                Intcode(mem.toMutableList())
-                    .runAsync(channels.last()::receive, channels.first()::send)
+                var lastOutput: Long? = null
+                val vm = Intcode(mem.toMutableList())
+                while (true) {
+                    channels.first().send(
+                        (vm.getOutput(channels.last()::receive) ?: break).also { lastOutput = it }
+                    )
+                }
+                return@coroutineScope lastOutput
             }
 
         fun <T> List<T>.permutations(): Iterable<List<T>> = sequence<List<T>> {

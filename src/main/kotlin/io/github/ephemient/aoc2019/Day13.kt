@@ -20,42 +20,23 @@ class Day13(lines: List<String>) {
         }
         .size
 
+    @Suppress("LoopWithTooManyJumpStatements")
     fun part2(): Long? = runBlocking {
         var score: Long? = null
         var ball: Long? = null
         var paddle: Long? = null
-        var x = 0L
-        var y = 0L
-        var state = State.PENDING_X
-        Intcode(ints.toMutableList().also { it[0] = 2 }).runAsync(
-            input = { compareValues(ball, paddle).sign.toLong() },
-            output = { output ->
-                when (state) {
-                    State.PENDING_X -> {
-                        x = output
-                        state = State.PENDING_Y
-                    }
-                    State.PENDING_Y -> {
-                        y = output
-                        state = State.PENDING_OUTPUT
-                    }
-                    State.PENDING_OUTPUT -> {
-                        when {
-                            x == -1L && y == 0L -> score = output
-                            output == 3L -> paddle = x
-                            output == 4L -> ball = x
-                        }
-                        state = State.PENDING_X
-                    }
-                }
+        val vm = Intcode(ints.toMutableList().also { it[0] = 2 })
+        val input = suspend { compareValues(ball, paddle).sign.toLong() }
+        while (true) {
+            val x = vm.getOutput(input) ?: break
+            val y = vm.getOutput(input) ?: break
+            val value = vm.getOutput(input) ?: break
+            when {
+                x == -1L && y == 0L -> score = value
+                value == 3L -> paddle = x
+                value == 4L -> ball = x
             }
-        )
+        }
         return@runBlocking score
-    }
-
-    private enum class State {
-        PENDING_X,
-        PENDING_Y,
-        PENDING_OUTPUT,
     }
 }

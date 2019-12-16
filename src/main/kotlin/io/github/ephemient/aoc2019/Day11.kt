@@ -6,31 +6,25 @@ class Day11(private val lines: List<String>) {
     private val ints: List<Long> =
         lines.first().splitToSequence(",").map { it.toLong() }.toList()
 
+    @Suppress("LoopWithTooManyJumpStatements")
     private suspend fun walk(start: Boolean): Map<Pair<Int, Int>, Boolean> {
         val grid = mutableMapOf(0 to 0 to start)
         var x = 0
         var y = 0
         var dx = 0
         var dy = 1
-        var turning = false
-        Intcode(ints.toMutableList()).runAsync(
-            input = { if (grid[x to y] == true) 1 else 0 },
-            output = { value ->
-                if (turning) {
-                    if (value == 0L) {
-                        dx = -dy.also { dy = dx }
-                    } else {
-                        dy = -dx.also { dx = dy }
-                    }
-                    x += dx
-                    y += dy
-                    turning = false
-                } else {
-                    grid[x to y] = value != 0L
-                    turning = true
-                }
+        val vm = Intcode(ints.toMutableList())
+        val input = suspend { if (grid[x to y] == true) 1L else 0L }
+        while (true) {
+            grid[x to y] = (vm.getOutput(input) ?: break) != 0L
+            if ((vm.getOutput(input) ?: break) != 0L) {
+                dy = -dx.also { dx = dy }
+            } else {
+                dx = -dy.also { dy = dx }
             }
-        )
+            x += dx
+            y += dy
+        }
         return grid
     }
 
