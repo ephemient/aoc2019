@@ -23,12 +23,13 @@ def part1(lines, times=100):
     '''
     value = list(map(int, lines[0].strip()))
     for _ in range(times):
-        value = [
-            abs(
-                sum(x * (0, 1, 0, -1)[(j + 1) % (4 * i + 4) // (i + 1)]
-                    for j, x in enumerate(value))) % 10
-            for i in range(len(value))
-        ]
+        for x in range(len(value)):
+            acc, sign = 0, True
+            for base in range(x, len(value), 2 * x + 2):
+                span_sum = sum(value[base:base + x + 1])
+                acc += span_sum if sign else -span_sum
+                sign = not sign
+            value[x] = abs(acc) % 10
     return ''.join(map(str, value[:8]))
 
 
@@ -43,14 +44,15 @@ def part2(lines, times=100):
     '''
     value = list(map(int, lines[0].strip()))
     offset = reduce(lambda acc, x: 10 * acc + x, value[:7], 0)
-    logical_len = 10000 * len(value)
-    assert offset < logical_len <= 2 * offset
-    value = [value[i % len(value)] for i in range(offset, logical_len)]
+    n = 10000 * len(value) - offset
+    assert 8 <= n < offset
+    value = reduce(lambda acc, _: acc + value,
+                   range((n - offset % len(value) - 1) // len(value) + 1),
+                   value[offset % len(value):])
     for _ in range(times):
-        for i in reversed(range(1, len(value))):
-            value[i - 1] += value[i]
-        for i in range(len(value)):
-            value[i] = abs(value[i]) % 10
+        acc = 0
+        for i in reversed(range(n)):
+            acc = value[i] = abs(acc + value[i]) % 10
     return ''.join(map(str, value[:8]))
 
 
