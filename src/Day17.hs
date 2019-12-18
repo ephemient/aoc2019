@@ -73,7 +73,7 @@ paths = paths' False where
       | otherwise = []
     decToZero n = if n > 1 then Just $ n - 1 else Nothing
 
-programs :: (Eq a, Show a, Show b) => Int -> ([a] -> Bool) -> [b] -> [a] -> [([b], [[a]])]
+programs :: (Eq a) => Int -> ([a] -> Bool) -> [b] -> [a] -> [([b], [[a]])]
 programs maxCount accept ids = map (first reverse) . programs' [] [] ids where
     programs' declared k _ [] = [(k, declared)]
     programs' _ k _ _ | length k >= maxCount = []
