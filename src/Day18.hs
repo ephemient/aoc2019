@@ -58,7 +58,7 @@ explore :: (Num a, Ord a) =>
     Map (a, a) Item -> (a, a) -> [[((Char, Int), Set Char)]]
 explore maze pos0 = execWriter $ bfsM proj go
     (pos0, Set.size $ reachableKeys maze pos0, Set.empty, Set.empty, []) where
-    proj (pos, _, doors, keys, _) = (pos, doors, keys)
+    proj (pos, _, doors, _, path) = (pos, doors, fst . fst <$> path)
     go _ (_, 0, _, _, path) = tell [reverse path] $> []
     go d (pos, pending, doors, keys, path) = return
       [ (pos', pending', doors', keys', path')
@@ -103,7 +103,7 @@ day18a input = listToMaybe . mapMaybe complete $ explore maze pos0 where
     complete _ = Nothing
 
 day18b :: String -> Maybe Int
-day18b input = listToMaybe .
+day18b input = fmap minimum . nonEmpty .
     mapMaybe (joinPaths Set.empty . map (maybe (Left 0) Right . nonEmpty)) .
     sequence $ fmap simplify . explore maze <$> botPositions where
     raw = parse input
