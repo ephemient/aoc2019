@@ -37,6 +37,6 @@ spec :: Spec
 spec =
     describe "part 1" $
         it "examples" $ do
-            let bot = intercalate "," $
-                    foldr (\c -> ("104" :) . (show (ord c) :)) ["99"] sample1
-            day17a bot `shouldBe` Right 76
+            let bot = intercalate "," .
+                    foldr (\c s -> "104" : show (ord c) : s) ["99"]
+            day17a (bot sample1) `shouldBe` Right 76

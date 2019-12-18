@@ -10,22 +10,21 @@ import Control.Monad.ST (runST)
 import Data.Char (chr, ord)
 import Data.Function (on)
 import Data.Functor (($>))
-import Data.List (groupBy, inits, stripPrefix, tails)
+import Data.List (groupBy, inits, intersperse, stripPrefix, tails)
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map (filter, fromSet, keys, null, updateLookupWithKey)
 import qualified Data.Set as Set (fromList, intersection, size)
 import Data.Vector.Generic (Vector, (//))
 import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
+import Debug.Trace (traceId, traceM)
 import Intcode (evalIntcodeT, getOutput, setInput)
 import Intcode.Vector (memory)
 import qualified Intcode.Vector (run)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
-
-import Debug.Trace
 
 data Command = CommandLeft | CommandRight | CommandStep deriving (Eq)
 instance Show Command where
@@ -75,12 +74,9 @@ paths = paths' False where
     decToZero n = if n > 1 then Just $ n - 1 else Nothing
 
 programs :: (Eq a, Show a, Show b) => Int -> ([a] -> Bool) -> [b] -> [a] -> [([b], [[a]])]
-programs maxCount accept ids = map (first reverse) . programs' [] [] ids . traceShowId where
+programs maxCount accept ids = map (first reverse) . programs' [] [] ids where
     programs' declared k _ [] = [(k, declared)]
     programs' _ k _ _ | length k >= maxCount = []
-    programs' declared k [] input
-      | length input < 164
-      , traceShow (reverse k, map (:[]) declared, input) False = undefined
     programs' declared k ids' input =
       [ (k', declared')
       | (identifier, program) <- zip ids declared
@@ -105,19 +101,15 @@ day17a input = do
 day17b :: String -> Either (ParseErrorBundle String Void) Int
 day17b input = do
     mem0 <- parse (parser @Unboxed.Vector) "" input
-    {-
     let (points, start, direction) = draw mem0
         allPaths = paths points start direction
-        (ids, programs'):_ = allPaths >>=
+        (ids, [programA, programB, programC]):_ = allPaths >>=
             programs 10 ((<= 20) . length . show) "ABC"
-    traceM $ intersperse ',' ids
-    mapM_ traceShowM programs'
-    -}
-    let intcodeInput = ord <$> unlines
-          [ "A,B,C,B,A,C,A,C,A,B"
-          , "L,6,R,2,R,2,L,12,R,6"
-          , "L,10,R,10,R,6,L,4"
-          , "R,10,L,4,L,4,L,12"
+        intcodeInput = map ord $ traceId $ unlines
+          [ intersperse ',' ids
+          , show programA
+          , show programB
+          , show programC
           , "n"
           ]
         getInput (i:input') = setInput (getInput input') $> i
