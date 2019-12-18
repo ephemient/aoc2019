@@ -115,7 +115,7 @@ import Day16 (day16a, day16b)
 ```
 ## [Day 17: Set and Forget](/src/Day17.hs)
 ```haskell
-import Day17 (day17a)
+import Day17 (day17a, day17b)
 ```
 
 ---
@@ -165,5 +165,5 @@ main = do
     run 14 (print <=< rightOrFail) [day14a, day14b]
     run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
     run 16 putStrLn [(!! 100) . day16a, day16b]
-    run 17 (print <=< rightOrFail) [day17a]
+    run 17 (print <=< rightOrFail) [day17a, day17b]
 ```
