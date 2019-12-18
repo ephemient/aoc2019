@@ -8,6 +8,7 @@ module Day18 (day18a, day18b) where
 import Control.Applicative (liftA2)
 import Control.Arrow ((***))
 import Control.Monad ((>=>), filterM, guard)
+import Control.Monad.Cont (callCC, runCont)
 import Control.Monad.State (evalStateT, gets, modify)
 import Control.Monad.Trans (lift)
 import Control.Monad.Writer (execWriter, tell)
@@ -21,9 +22,9 @@ import Data.List hiding ((\\))
 import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import Data.Map.Lazy (Map, (!?))
 import qualified Data.Map.Lazy as Map (filter, fromList, insert, keys, mapMaybe)
-import Data.Maybe (listToMaybe, mapMaybe, maybeToList)
+import Data.Maybe (mapMaybe, maybeToList)
 import Data.Set (Set, (\\))
-import qualified Data.Set as Set (empty, fromList, insert, member, null, singleton, size, union, unions)
+import qualified Data.Set as Set (delete, empty, fromList, insert, member, null, singleton, size, union, unions)
 
 data Item = Open | Key Char | Door Char
 
@@ -52,6 +53,20 @@ reachableKeys maze = execWriter . bfsM id go where
             _ -> return pos'
       | pos' <- neighbors pos
       , item <- maybeToList $ maze !? pos'
+      ]
+
+explore1 :: (Num a, Ord a) => Map (a, a) Item -> (a, a) -> Maybe Int
+explore1 maze pos0 = flip runCont id $ callCC $ \exit ->
+    bfsM id (go exit) (pos0, reachableKeys maze pos0) $> Nothing where
+    go exit d (_, remaining) | Set.null remaining = exit $ Just d
+    go _ _ (pos, remaining) = return
+      [ (pos', remaining')
+      | pos' <- neighbors pos
+      , item <- maybeToList $ maze !? pos'
+      , remaining' <- case item of
+            Key c -> [Set.delete c remaining]
+            Door c | Set.member c remaining -> []
+            _ -> [remaining]
       ]
 
 explore :: (Num a, Ord a) =>
@@ -94,13 +109,10 @@ parseItem c | isUpper c = Just . Door $ toLower c
 parseItem _ = Nothing
 
 day18a :: String -> Maybe Int
-day18a input = listToMaybe . mapMaybe complete $ explore maze pos0 where
+day18a input = explore1 maze pos0 where
     raw = parse input
     [pos0] = Map.keys $ Map.filter ('@' ==) raw
     maze = Map.mapMaybe parseItem raw
-    complete path@(_:_)
-      | all (Set.null . snd) path = Just . snd . fst $ last path
-    complete _ = Nothing
 
 day18b :: String -> Maybe Int
 day18b input = fmap minimum . nonEmpty .
