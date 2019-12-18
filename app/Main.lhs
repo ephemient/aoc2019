@@ -117,6 +117,10 @@ import Day16 (day16a, day16b)
 ```haskell
 import Day17 (day17a, day17b)
 ```
+## [Day 18: Many-Worlds Interpretation](/src/Day18.hs)
+```haskell
+import Day18 (day18a, day18b)
+```
 
 ---
 
@@ -166,4 +170,5 @@ main = do
     run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
     run 16 putStrLn [(!! 100) . day16a, day16b]
     run 17 (print <=< rightOrFail) [day17a, day17b]
+    run 18 (print <=< justOrFail) [day18a, day18b]
 ```
