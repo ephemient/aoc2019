@@ -83,16 +83,14 @@ sample9 = unlines
 
 spec :: Spec
 spec = do
-    describe "part 1" $
-        it "examples" $ do
-            day18a sample1 `shouldBe` Just 8
-            day18a sample2 `shouldBe` Just 86
-            day18a sample3 `shouldBe` Just 132
-            day18a sample4 `shouldBe` Just 136
-            day18a sample5 `shouldBe` Just 81
-    describe "part 2" $
-        it "examples" $ do
-            day18b sample6 `shouldBe` Just 8
-            day18b sample7 `shouldBe` Just 24
-            day18b sample8 `shouldBe` Just 32
-            day18b sample9 `shouldBe` Just 72
+    describe "part 1" $ do
+        it "example 1" $ day18a sample1 `shouldBe` Just 8
+        it "example 2" $ day18a sample2 `shouldBe` Just 86
+        it "example 3" $ day18a sample3 `shouldBe` Just 132
+        it "example 4" $ day18a sample4 `shouldBe` Just 136
+        it "example 5" $ day18a sample5 `shouldBe` Just 81
+    describe "part 2" $ do
+        it "example 1" $ day18b sample6 `shouldBe` Just 8
+        it "example 2" $ day18b sample7 `shouldBe` Just 24
+        it "example 3" $ day18b sample8 `shouldBe` Just 32
+        it "example 4" $ day18b sample9 `shouldBe` Just 72
