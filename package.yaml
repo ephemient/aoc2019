@@ -86,10 +86,10 @@ benchmarks:
   aoc2019-bench:
     main:                Main.hs
     source-dirs:         bench
+    c-sources:           bench/cbits/main.c
     ghc-options:
+    - -no-hs-main
     - -threaded
-    - -rtsopts
-    - '"-with-rtsopts=-N -qg"'
     dependencies:
     - aoc2019
     - criterion

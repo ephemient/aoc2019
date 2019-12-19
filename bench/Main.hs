@@ -1,6 +1,8 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module Main (main) where
 
-import Criterion.Main (bench, bgroup, defaultMain, env, nf)
+import Control.Arrow ((>>>))
+import Criterion.Main (bench, bgroup, defaultMain, env, envWithCleanup, nf)
 import Day1 (day1a, day1b)
 import Day2 (day2a, day2b)
 import Day3 (day3a, day3b)
@@ -21,6 +23,15 @@ import Day17 (day17a, day17b)
 import Day18 (day18a, day18b)
 import Day19 (day19a, day19b)
 import Paths_aoc2019 (getDataFileName)
+import System.Environment.Blank (getEnv, setEnv, unsetEnv)
+
+foreign export ccall "HsMain" main :: IO ()
+
+setTrace :: String -> IO (Maybe String)
+setTrace value = getEnv "TRACE" <* setEnv "TRACE" value True
+
+unsetTrace :: Maybe String -> IO ()
+unsetTrace = maybe (unsetEnv "TRACE") (setEnv "TRACE" `flip` True)
 
 getDayInput :: Int -> IO String
 getDayInput i = getDataFileName ("day" ++ show i ++ ".txt") >>= readFile
@@ -91,10 +102,11 @@ main = defaultMain
       [ bench "part 1" $ nf ((!! 100) . day16a) input
       , bench "part 2" $ nf day16b input
       ]
-  , env (getDayInput 17) $ \input -> bgroup "Day 17"
-      [ bench "part 1" $ nf day17a input
-      , bench "part 2" $ nf day17b input
-      ]
+  , envWithCleanup ((,) <$> getDayInput 17 <*> setTrace "0")
+        (unsetTrace . snd) $ fst >>> \input -> bgroup "Day 17"
+          [ bench "part 1" $ nf day17a input
+          , bench "part 2" $ nf day17b input
+          ]
   , env (getDayInput 18) $ \input -> bgroup "Day 18"
       [ bench "part 1" $ nf day18a input
       , bench "part 2" $ nf day18b input
