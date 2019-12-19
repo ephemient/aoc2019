@@ -1,6 +1,8 @@
 {-# LANGUAGE LambdaCase, NamedFieldPuns, TupleSections, RecordWildCards #-}
 module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, liftMemory, run, runIntcodeT, setInput) where
 
+import Control.Monad.Fail (MonadFail)
+import qualified Control.Monad.Fail as Fail (fail)
 import Control.Monad.Loops (unfoldM)
 import Control.Monad.Fix (fix)
 import Control.Monad.Trans.Class (MonadTrans(..))
@@ -41,6 +43,9 @@ instance (Monad m) => Monad (IntcodeT e m) where
     IntcodeT runA >>= f = IntcodeT $ \mem s -> do
         (s', a) <- runA mem s
         runIntcodeT (f a) mem s'
+
+instance (MonadFail m) => MonadFail (IntcodeT e m) where
+    fail msg = IntcodeT $ \_ _ -> Fail.fail msg
 
 instance MonadTrans (IntcodeT e) where lift m = IntcodeT $ \_ s -> (s,) <$> m
 

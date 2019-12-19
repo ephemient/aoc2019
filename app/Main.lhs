@@ -121,6 +121,10 @@ import Day17 (day17a, day17b)
 ```haskell
 import Day18 (day18a, day18b)
 ```
+## [Day 19: Tractor Beam](/src/Day19.hs)
+```haskell
+import Day19 (day19a, day19b)
+```
 
 ---
 
@@ -171,4 +175,5 @@ main = do
     run 16 putStrLn [(!! 100) . day16a, day16b]
     run 17 (print <=< rightOrFail) [day17a, day17b]
     run 18 (print <=< justOrFail) [day18a, day18b]
+    run 19 (print <=< rightOrFail) [day19a, day19b]
 ```
