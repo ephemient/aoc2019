@@ -10,7 +10,8 @@ import Control.Monad.ST (runST)
 import Data.Char (chr, ord)
 import Data.Function (on)
 import Data.Functor (($>))
-import Data.List (groupBy, inits, intersperse, stripPrefix, tails)
+import Data.List (groupBy, inits, intercalate, intersperse, stripPrefix, tails)
+import Data.List.Split (splitOn)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (filter, fromSet, keys, null, updateLookupWithKey)
 import qualified Data.Set as Set (fromList, intersection, size)
@@ -102,14 +103,14 @@ day17b :: String -> Either (ParseErrorBundle String Void) Int
 day17b input = do
     mem0 <- parse (parser @Unboxed.Vector) "" input
     let (points, start, direction) = draw mem0
-        allPaths = paths points start direction
+        allPaths = splitOn "," . show <$> paths points start direction
         (ids, [programA, programB, programC]):_ = allPaths >>=
-            programs 10 ((<= 20) . length . show) "ABC"
+            programs 10 ((<= 20) . length . intercalate ",") "ABC"
         intcodeInput = map ord $ traceId $ unlines
           [ intersperse ',' ids
-          , show programA
-          , show programB
-          , show programC
+          , intercalate "," programA
+          , intercalate "," programB
+          , intercalate "," programC
           , "n"
           ]
         getInput (i:input') = setInput (getInput input') $> i
