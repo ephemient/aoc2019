@@ -2,7 +2,7 @@
 Module:         Day17
 Description:    <https://adventofcode.com/2019/day/17 Day 17: Set and Forget>
 -}
-{-# LANGUAGE FlexibleContexts, LambdaCase, TransformListComp, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, TransformListComp, TupleSections, TypeApplications #-}
 module Day17 (day17a, day17b, draw, paths, programs) where
 
 import Control.Arrow (first)
@@ -46,19 +46,18 @@ draw :: (Vector v Int) => v Int -> (Map (Int, Int) Int, (Int, Int), (Int, Int))
 draw mem0 = (Map.fromSet crossing points, position, direction) where
     output = lines $ fmap chr $ runST $ Intcode.Vector.run mem0 []
     points = Set.fromList
-        [(x, y) | (y, s) <- zip [0..] output, (x, c) <- zip [0..] s, c /= '.']
+        [(x, y) | (y, s) <- zip [0..] output, (x, '#') <- zip [0..] s]
     [(position, direction)] = do
         (y, line) <- zip [0..] output
-        (x, Just dir) <- zip [0..] $ lookupDirection <$> line
-        return ((x, y), dir)
-    lookupDirection '<' = Just (-1, 0)
-    lookupDirection '>' = Just (1, 0)
-    lookupDirection '^' = Just (0, -1)
-    lookupDirection 'v' = Just (0, 1)
-    lookupDirection _ = Nothing
-    crossing (x, y) =
-        if Set.size (dirs `Set.intersection` points) >= 3 then 2 else 1 where
-        dirs = Set.fromList [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
+        (x, c) <- zip [0..] line
+        ((x, y),) <$> case c of
+            '<' -> [(-1, 0)]
+            '>' -> [(1, 0)]
+            '^' -> [(0, -1)]
+            'v' -> [(0, 1)]
+            _ -> []
+    crossing (x, y) = max 1 $ Set.size (dirs `Set.intersection` points) `div` 2
+      where dirs = Set.fromList [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
 
 paths :: (Num a, Ord a) => Map (a, a) Int -> (a, a) -> (a, a) -> [[Command]]
 paths = paths' False where
@@ -66,12 +65,13 @@ paths = paths' False where
         paths' True points pos dir
         ++ ((CommandLeft :) <$> paths' True points pos (dy, -dx))
         ++ ((CommandRight :) <$> paths' True points pos (-dy, dx))
-    paths' True points pos@(x, y) dir@(dx, dy)
-      | (Just _, points') <- Map.updateLookupWithKey (const decToZero) pos points
-      = if Map.null points' then [[]] else
-        (CommandStep:) <$> paths' False points' (x + dx, y + dy) dir
-      | otherwise = []
-    decToZero n = if n > 1 then Just $ n - 1 else Nothing
+    paths' True points (x, y) dir@(dx, dy)
+      | pos <- (x + dx, y + dy)
+      , (Just _, points') <- Map.updateLookupWithKey decToZero pos points
+      = (CommandStep:) <$>
+        if Map.null points' then [[]] else paths' False points' pos dir
+    paths' _ _ _ _ = []
+    decToZero _ n = if n > 1 then Just $ n - 1 else Nothing
 
 programs :: (Eq a) => Int -> ([a] -> Bool) -> [b] -> [a] -> [([b], [[a]])]
 programs maxCount accept ids = map (first reverse) . programs' [] [] ids where
