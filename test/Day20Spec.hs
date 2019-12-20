@@ -113,5 +113,5 @@ spec = do
     describe "part 2" $
         it "examples" $ do
             day20b sample1 `shouldBe` Just 26
-            -- day20b sample2 `shouldBe` Nothing
+            day20b sample2 `shouldBe` Nothing
             day20b sample3 `shouldBe` Just 396

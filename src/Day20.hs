@@ -11,7 +11,7 @@ import Data.Char (isAlpha)
 import Data.Functor (($>))
 import Data.List (tails, transpose)
 import Data.Map.Lazy (Map, (!), (!?))
-import qualified Data.Map.Lazy as Map (assocs, fromList, fromListWith)
+import qualified Data.Map.Lazy as Map (assocs, fromList, fromListWith, size)
 import Data.Maybe (maybeToList)
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member, toList)
@@ -76,9 +76,9 @@ day20b input = flip runCont id $ callCC $ \exit ->
     [end] = reversePortals ! "ZZ"
     go exit d (p, 0) | p == end = exit d
     go _ _ (p@(x, y), n) = return $
-        (map (, n) $ filter (`Set.member` maze) $ neighbors p) ++ do
+        map (, n) (filter (`Set.member` maze) $ neighbors p) ++ do
             portal <- maybeToList $ portals !? p
             q <- filter (/= p) $ reversePortals ! portal
             if x `elem` [minX, maxX] || y `elem` [minY, maxY]
             then guard (n > 0) $> (q, n - 1)
-            else return (q, n + 1)
+            else guard (2 * n < Map.size portals) $> (q, n + 1)
