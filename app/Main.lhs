@@ -125,6 +125,10 @@ import Day18 (day18a, day18b)
 ```haskell
 import Day19 (day19a, day19b)
 ```
+## [Day 20: Donut Maze](/src/Day20.hs)
+```haskell
+import Day20 (day20a, day20b)
+```
 
 ---
 
@@ -176,4 +180,5 @@ main = do
     run 17 (print <=< rightOrFail) [day17a, day17b]
     run 18 (print <=< justOrFail) [day18a, day18b]
     run 19 (print <=< rightOrFail) [day19a, day19b]
+    run 20 (print <=< justOrFail) [day20a, day20b]
 ```
