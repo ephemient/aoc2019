@@ -2,52 +2,37 @@
 Module:         Day20
 Description:    <https://adventofcode.com/2019/day/20 Day 20: Donut Maze>
 -}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections, ViewPatterns #-}
 module Day20 (day20a, day20b) where
 
 import Control.Monad (guard)
 import Control.Monad.Cont (callCC, runCont)
 import Data.Char (isAlpha)
 import Data.Functor (($>))
-import Data.List (tails, transpose)
+import Data.List (elemIndices, tails, transpose)
 import Data.Map.Lazy (Map, (!), (!?))
 import qualified Data.Map.Lazy as Map (assocs, fromList, fromListWith, size)
-import Data.Maybe (maybeToList)
+import Data.Maybe (catMaybes, maybeToList)
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member, toList)
 import Data.Tuple (swap)
 import Graph (bfsM)
 
 parse :: String -> (Set (Int, Int), Map (Int, Int) String)
-parse input = (maze, portals) where
-    maze = Set.fromList $ do
-        (y, line) <- zip [0..] $ lines input
-        (x, '.') <- zip [0..] line
-        return (x, y)
+parse (lines -> rows@(transpose -> cols)) = (maze, portals) where
+    maze = Set.fromList
+        [(x, y) | (y, row) <- zip [0..] rows, x <- elemIndices '.' row]
+    match n (a:b:'.':_) | isAlpha a, isAlpha b = Just (n + 2, [a, b])
+    match n ('.':a:b:_) | isAlpha a, isAlpha b = Just (n, [a, b])
+    match _ _ = Nothing
+    matchAll = catMaybes . zipWith match [0..] . tails
     portals = Map.fromList $
-      [ ((x + 2, y), [a, b])
-      | (y, line) <- zip [0..] $ lines input
-      , (x, a:b:'.':_) <- zip [0..] $ tails line
-      , isAlpha a, isAlpha b
-      ] ++
-      [ ((x, y), [a, b])
-      | (y, line) <- zip [0..] $ lines input
-      , (x, '.':a:b:_) <- zip [0..] $ tails line
-      , isAlpha a, isAlpha b
-      ] ++
-      [ ((x, y + 2), [a, b])
-      | (x, column) <- zip [0..] $ transpose $ lines input
-      , (y, a:b:'.':_) <- zip [0..] $ tails column
-      , isAlpha a, isAlpha b
-      ] ++
-      [ ((x, y), [a, b])
-      | (x, column) <- zip [0..] $ transpose $ lines input
-      , (y, '.':a:b:_) <- zip [0..] $ tails column
-      , isAlpha a, isAlpha b
-      ]
+        [((x, y), s) | (y, row) <- zip [0..] rows, (x, s) <- matchAll row] ++
+        [((x, y), s) | (x, col) <- zip [0..] cols, (y, s) <- matchAll col]
 
-invertMap :: (Ord a, Ord b) => Map a b -> Map b [a]
-invertMap = Map.fromListWith (++) . map (fmap (:[]) . swap) . Map.assocs
+invertMap :: (Ord a, Ord b, Applicative t, Monoid (t a)) =>
+    Map a b -> Map b (t a)
+invertMap = Map.fromListWith (<>) . map (fmap pure . swap) . Map.assocs
 
 neighbors :: (Num a) => (a, a) -> [(a, a)]
 neighbors (x, y) = [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
