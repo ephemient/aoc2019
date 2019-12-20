@@ -1,4 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
 module Main (main) where
 
 import Control.Arrow ((>>>))
@@ -24,8 +23,6 @@ import Day18 (day18a, day18b)
 import Day19 (day19a, day19b)
 import Paths_aoc2019 (getDataFileName)
 import System.Environment.Blank (getEnv, setEnv, unsetEnv)
-
-foreign export ccall "HsMain" main :: IO ()
 
 setTrace :: String -> IO (Maybe String)
 setTrace value = getEnv "TRACE" <* setEnv "TRACE" value True
