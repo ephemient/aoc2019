@@ -10,13 +10,13 @@ curl -sSL https://get.haskellstack.org/ | sh -s -
 stack setup
 ```
 
-Run the [HSpec](https://hspec.github.io/) test suite:
+Run the [Hspec](https://hspec.github.io/) test suite:
 
 ```sh
 stack test aoc2019:test:aoc2019-test
 ```
 
-Run [criterion](http://www.serpentine.com/criterion/) benchmarks:
+Run [criterion](http://www.serpentine.com/criterion/) benchmarks ([results online](https://ephemient.github.io/aoc2019/aoc2019-bench.html)):
 
 ```sh
 stack bench aoc2019:bench:aoc2019-bench

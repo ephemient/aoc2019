@@ -6,7 +6,7 @@ import Data.Functor (($>))
 import Debug.Trace (traceM)
 import Intcode (Memory, evalIntcodeT, getOutput, setInput)
 
-runTraced :: (Monad m) => Memory m Int -> [Char] -> m [Int]
+runTraced :: (Monad m) => Memory m Int -> String -> m [Int]
 runTraced mem input = evalIntcodeT (captureOutput [] "") mem $
     traceM input >> getInput (ord <$> input) where
     getInput (i:input') = setInput (getInput input') $> i

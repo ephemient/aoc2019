@@ -2,7 +2,7 @@
 Module:         Day17
 Description:    <https://adventofcode.com/2019/day/17 Day 17: Set and Forget>
 -}
-{-# LANGUAGE FlexibleContexts, LambdaCase, TransformListComp, TupleSections, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, TransformListComp, TupleSections, TypeApplications #-}
 module Day17 (day17a, day17b, draw, paths, programs) where
 
 import Control.Arrow (first)

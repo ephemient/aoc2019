@@ -44,7 +44,7 @@ mazePaths isTerminal maze locs = Map.fromList
 
 day18 :: (Num a, Ord a, Ord b) =>
     Map (a, a) (Maybe (Either b b)) -> [(a, a)] -> Maybe Int
-day18 maze start = flip runCont id $ callCC $ \exit -> do
+day18 maze start = flip runCont id $ callCC $ \exit ->
     flip evalStateT Set.empty $ dijkstraM (go $ lift . exit . Just)
         (Heap.singleton @FstMinPolicy
             (0, (Left . fst <$> zip [0..] start, Set.empty))) $> Nothing where
