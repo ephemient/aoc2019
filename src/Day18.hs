@@ -2,97 +2,63 @@
 Module:         Day18
 Description:    <https://adventofcode.com/2019/day/18 Day 18: Many-Worlds Interpretation>
 -}
-{-# LANGUAGE FlexibleContexts, TupleSections, TypeApplications, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, TypeApplications #-}
 module Day18 (day18a, day18b) where
 
-import Control.Applicative (liftA2)
-import Control.Arrow ((***))
-import Control.Monad ((>=>), filterM, guard)
+import Control.Monad (guard)
 import Control.Monad.Cont (callCC, runCont)
 import Control.Monad.State (evalStateT, gets, modify)
 import Control.Monad.Trans (lift)
 import Control.Monad.Writer (execWriter, tell)
 import Data.Char (isLower, isUpper, toLower)
-import Data.Either (partitionEithers)
-import Data.Function (on)
+import Data.Either (isRight)
 import Data.Functor (($>))
-import Data.Heap (FstMinPolicy, Heap, HeapItem)
-import qualified Data.Heap as Heap (insert, singleton, view)
+import Data.Heap (FstMinPolicy)
+import qualified Data.Heap as Heap (singleton)
 import Data.List hiding ((\\))
-import Data.List.NonEmpty (NonEmpty((:|)), nonEmpty)
 import Data.Map.Lazy (Map, (!?))
-import qualified Data.Map.Lazy as Map (filter, fromList, insert, keys, mapMaybe)
-import Data.Maybe (mapMaybe, maybeToList)
+import qualified Data.Map.Lazy as Map (assocs, delete, filter, fromList, keys, mapMaybe, singleton, union, size)
+import Data.Maybe (maybeToList)
 import Data.Set (Set, (\\))
-import qualified Data.Set as Set (delete, empty, fromList, insert, member, null, singleton, size, union, unions)
-
-data Item = Open | Key Char | Door Char
-
-bfsWithM :: (HeapItem pol item, Traversable t, Monad m) =>
-    (item -> m (t item)) -> Heap pol item -> m ()
-bfsWithM f = bfsWithM' where
-    bfsWithM' (Heap.view -> Just (item, queue)) = f item >>=
-        bfsWithM' . foldl' (flip Heap.insert) queue
-    bfsWithM' _ = return ()
-
-bfsM :: (Ord k, Monad m) => (a -> k) -> (Int -> a -> m [a]) -> a -> m ()
-bfsM proj f start = flip evalStateT (Set.singleton $ proj start) .
-    bfsWithM (g >=> filterM (checkState . proj . snd)) $
-    Heap.singleton @FstMinPolicy (0, start) where
-    g (d, a) = fmap (d + 1,) <$> lift (f d a)
-    checkState s = gets (not . Set.member s) <* modify (Set.insert s)
+import qualified Data.Set as Set (empty, foldr, fromList, insert, member, null, size)
+import Graph (bfsM, dijkstraM)
 
 neighbors :: (Num a) => (a, a) -> [(a, a)]
 neighbors (x, y) = [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
 
-reachableKeys :: (Num a, Ord a) => Map (a, a) Item -> (a, a) -> Set Char
-reachableKeys maze = execWriter . bfsM id go where
-    go _ pos = sequence
-      [ case item of
-            Key c -> tell (Set.singleton c) $> pos'
-            _ -> return pos'
+mazePaths :: (Num a, Ord a, Ord b, Ord c) =>
+    (c -> Bool) -> Map (a, a) (Maybe (Either b b)) -> Map (a, a) c -> Map c (Map c (Set b, Int))
+mazePaths isTerminal maze locs = Map.fromList
+  [ (c0, execWriter $ bfsM fst (go c0) (pos0, Set.empty))
+  | (pos0, c0) <- Map.assocs locs
+  ] where
+    go c0 d (pos, doors)
+      | Just c1 <- locs !? pos, c0 /= c1, isTerminal c1
+      = tell (Map.singleton c1 (doors, d)) $> []
+      | otherwise = return
+      [ (pos', doors')
       | pos' <- neighbors pos
       , item <- maybeToList $ maze !? pos'
+      , let doors' = maybe id (either Set.insert $ flip const) item doors
       ]
 
-explore1 :: (Num a, Ord a) => Map (a, a) Item -> (a, a) -> Maybe Int
-explore1 maze pos0 = flip runCont id $ callCC $ \exit ->
-    bfsM id (go exit) (pos0, reachableKeys maze pos0) $> Nothing where
-    go exit d (_, remaining) | Set.null remaining = exit $ Just d
-    go _ _ (pos, remaining) = return
-      [ (pos', remaining')
-      | pos' <- neighbors pos
-      , item <- maybeToList $ maze !? pos'
-      , remaining' <- case item of
-            Key c -> [Set.delete c remaining]
-            Door c | Set.member c remaining -> []
-            _ -> [remaining]
-      ]
-
-explore :: (Num a, Ord a) =>
-    Map (a, a) Item -> (a, a) -> [[((Char, Int), Set Char)]]
-explore maze pos0 = execWriter $ bfsM proj go
-    (pos0, Set.size $ reachableKeys maze pos0, Set.empty, Set.empty, []) where
-    proj (pos, _, doors, _, path) = (pos, doors, fst . fst <$> path)
-    go _ (_, 0, _, _, path) = tell [reverse path] $> []
-    go d (pos, pending, doors, keys, path) = return
-      [ (pos', pending', doors', keys', path')
-      | pos' <- neighbors pos
-      , item <- maybeToList $ maze !? pos'
-      , (pending', doors', keys', path') <- case item of
-            Key c
-              | Set.member c doors -> []
-              | not $ Set.member c keys ->
-                [ ( pending - 1
-                  , doors
-                  , Set.insert c keys
-                  , ((c, d + 1), doors) : path
-                  )
-                ]
-            Door c | not $ Set.member c keys ->
-                [(pending, Set.insert c doors, keys, path)]
-            _ -> [(pending, doors, keys, path)]
-      ]
+day18 :: (Num a, Ord a, Ord b) =>
+    Map (a, a) (Maybe (Either b b)) -> [(a, a)] -> Maybe Int
+day18 maze start = flip runCont id $ callCC $ \exit -> do
+    flip evalStateT Set.empty $ dijkstraM (go $ lift . exit . Just)
+        (Heap.singleton @FstMinPolicy
+            (0, (Left . fst <$> zip [0..] start, Set.empty))) $> Nothing where
+    startLocs = Map.fromList . zip start $ Left <$> [0 :: Int ..]
+    keyLocs = Map.mapMaybe (>>= either (const Nothing) (Just . Right)) maze
+    paths = mazePaths isRight maze $ Map.union startLocs keyLocs
+    go exit (d, (_, keys)) | Set.size keys == Map.size keyLocs = exit d
+    go _ (d, state@(poss, keys)) = do
+        seen <- gets (Set.member state)
+        if seen then return [] else modify (Set.insert state) $> do
+            (pre, cur : post) <- zip (inits poss) (tails poss)
+            (Right key, (doors, w)) <- maybeToList (paths !? cur) >>= Map.assocs
+            guard . Set.null $ doors \\ keys
+            return (d + w, (pre ++ Right key : post, Set.insert key keys))
 
 parse :: String -> Map (Int, Int) Char
 parse input = Map.fromList
@@ -101,37 +67,24 @@ parse input = Map.fromList
   , (x, char) <- zip [0..] line
   ]
 
-parseItem :: Char -> Maybe Item
-parseItem '.' = Just Open
-parseItem '@' = Just Open
-parseItem c | isLower c = Just $ Key c
-parseItem c | isUpper c = Just . Door $ toLower c
+parseItem :: Char -> Maybe (Maybe (Either Char Char))
+parseItem '.' = Just Nothing
+parseItem '@' = Just Nothing
+parseItem c | isLower c = Just . Just $ Right c
+parseItem c | isUpper c = Just . Just . Left $ toLower c
 parseItem _ = Nothing
 
 day18a :: String -> Maybe Int
-day18a input = explore1 maze pos0 where
+day18a input = day18 maze start where
     raw = parse input
-    [pos0] = Map.keys $ Map.filter ('@' ==) raw
+    start = Map.keys $ Map.filter ('@' ==) raw
     maze = Map.mapMaybe parseItem raw
 
 day18b :: String -> Maybe Int
-day18b input = fmap minimum . nonEmpty .
-    mapMaybe (joinPaths Set.empty . map (maybe (Left 0) Right . nonEmpty)) .
-    sequence $ fmap simplify . explore maze <$> botPositions where
+day18b input = day18 maze start where
     raw = parse input
     [(x, y)] = Map.keys $ Map.filter ('@' ==) raw
-    botPositions = liftA2 (,) [x - 1, x + 1] [y - 1, y + 1]
-    maze = Map.mapMaybe parseItem . foldr (uncurry Map.insert) raw $
-        map (, '@') botPositions ++
-        map (, '#') (liftA2 (,) [x - 1..x + 1] [y - 1..y + 1])
-    simplify = map ((((Set.fromList *** maximum) . unzip) *** head) . unzip) .
-        groupBy ((==) `on` snd)
-    joinPaths _ (partitionEithers -> (ds, [])) = Just $ sum ds
-    joinPaths keys paths = do
-        let (Set.unions -> keys', paths') = unzip $ expend keys <$> paths
-        guard . not $ Set.null keys'
-        joinPaths (Set.union keys keys') paths'
-    expend keys (Right (((keys', d), doors) :| path))
-      | Set.null $ doors \\ keys = (keys', path') where
-        path' = maybe (Left d) (Right . fmap (fmap (\\ keys))) $ nonEmpty path
-    expend keys path = (Set.empty, fmap (fmap $ fmap (\\ keys)) path)
+    center = (,) <$> [x - 1..x + 1] <*> [y - 1..y + 1]
+    start = (,) <$> [x - 1, x + 1] <*> [y - 1, y + 1]
+    maze = Set.foldr Map.delete (Map.mapMaybe parseItem raw) $
+        Set.fromList center \\ Set.fromList start
