@@ -27,11 +27,10 @@ day21a input = do
     return . fmap NonEmpty.last . nonEmpty $ runST $ do
         mem <- memory mem0
         runTraced mem $ unlines
-          [ "NOT A J"
-          , "NOT B T"
-          , "OR T J"
-          , "NOT C T"
-          , "OR T J"
+          [ "OR A T"
+          , "AND B T"
+          , "AND C T"
+          , "NOT T J"
           , "AND D J"
           , "WALK"
           ]
@@ -42,11 +41,10 @@ day21b input = do
     return . fmap NonEmpty.last . nonEmpty $ runST $ do
         mem <- memory mem0
         runTraced mem $ unlines
-          [ "NOT A J"
-          , "NOT B T"
-          , "OR T J"
-          , "NOT C T"
-          , "OR T J"
+          [ "OR A T"
+          , "AND B T"
+          , "AND C T"
+          , "NOT T J"
           , "AND D J"
           , "NOT J T"
           , "OR E T"
