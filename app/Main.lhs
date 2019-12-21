@@ -129,6 +129,10 @@ import Day19 (day19a, day19b)
 ```haskell
 import Day20 (day20a, day20b)
 ```
+## [Day 21: Springboard Adventure](/src/Day21.hs)
+```haskell
+import Day21 (day21a, day21b)
+```
 
 ---
 
@@ -181,4 +185,5 @@ main = do
     run 18 (print <=< justOrFail) [day18a, day18b]
     run 19 (print <=< rightOrFail) [day19a, day19b]
     run 20 (print <=< justOrFail) [day20a, day20b]
+    run 21 (print <=< justOrFail <=< rightOrFail) [day21a, day21b]
 ```
