@@ -78,6 +78,7 @@ tests:
     - QuickCheck
     - aoc2019
     - array
+    - containers
     - hspec
     - mtl
     - vector
