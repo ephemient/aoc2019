@@ -181,7 +181,7 @@ main = do
     run 14 (print <=< rightOrFail) [day14a, day14b]
     run 15 (print <=< justOrFail <=< rightOrFail) [day15a, day15b]
     run 16 putStrLn [(!! 100) . day16a, day16b]
-    run 17 (print <=< rightOrFail) [day17a, day17b]
+    run 17 (print <=< justOrFail <=< rightOrFail) [fmap Just . day17a, day17b]
     run 18 (print <=< justOrFail) [day18a, day18b]
     run 19 (print <=< rightOrFail) [day19a, day19b]
     run 20 (print <=< justOrFail) [day20a, day20b]

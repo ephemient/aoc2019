@@ -7,10 +7,11 @@ module Day17 (day17a, day17b, draw, paths, programs) where
 
 import Control.Arrow (first)
 import Control.Monad.ST (runST)
-import Data.Char (chr, ord)
+import Data.Char (chr)
 import Data.Function (on)
-import Data.Functor (($>))
 import Data.List (groupBy, inits, intercalate, intersperse, stripPrefix, tails)
+import Data.List.NonEmpty (nonEmpty)
+import qualified Data.List.NonEmpty as NonEmpty (last)
 import Data.List.Split (splitOn)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (filter, fromSet, keys, null, updateLookupWithKey)
@@ -19,8 +20,7 @@ import Data.Vector.Generic (Vector, (//))
 import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Debug.Trace (traceId, traceM)
-import Intcode (evalIntcodeT, getOutput, setInput)
+import Intcode.Char (runTraced)
 import Intcode.Vector (memory)
 import qualified Intcode.Vector (run)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
@@ -99,27 +99,20 @@ day17a input = do
     let (points, _, _) = draw mem0
     return $ sum $ fmap (uncurry (*)) $ Map.keys $ Map.filter (> 1) points
 
-day17b :: String -> Either (ParseErrorBundle String Void) Int
+day17b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day17b input = do
     mem0 <- parse (parser @Unboxed.Vector) "" input
     let (points, start, direction) = draw mem0
         allPaths = splitOn "," . show <$> paths points start direction
         (ids, [programA, programB, programC]):_ = allPaths >>=
             programs 10 ((<= 20) . length . intercalate ",") "ABC"
-        intcodeInput = map ord $ traceId $ unlines
+        intcodeInput = unlines
           [ intersperse ',' ids
           , intercalate "," programA
           , intercalate "," programB
           , intercalate "," programC
           , "n"
           ]
-        getInput (i:input') = setInput (getInput input') $> i
-        getInput _ = fail "no input"
-        loop s = getOutput >>= \case
-            Just 10 -> traceM (reverse s) >> loop ""
-            Just c | c < 256 -> loop $ chr c : s
-            Just x -> return x
-            Nothing -> fail "unexpected termination"
-    return $ runST $ do
+    return . fmap NonEmpty.last . nonEmpty $ runST $ do
         mem <- memory $ mem0 // [(0, 2)]
-        evalIntcodeT (loop "") mem $ getInput intcodeInput
+        runTraced mem intcodeInput
