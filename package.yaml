@@ -80,6 +80,7 @@ tests:
     - array
     - containers
     - hspec
+    - megaparsec
     - mtl
     - vector
 

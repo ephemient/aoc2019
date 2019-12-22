@@ -133,6 +133,10 @@ import Day20 (day20a, day20b)
 ```haskell
 import Day21 (day21a, day21b)
 ```
+## [Day 22: Slam Shuffle](/src/Day22.hs)
+```haskell
+import Day22 (day22a, day22b)
+```
 
 ---
 
@@ -186,4 +190,5 @@ main = do
     run 19 (print <=< rightOrFail) [day19a, day19b]
     run 20 (print <=< justOrFail) [day20a, day20b]
     run 21 (print <=< justOrFail <=< rightOrFail) [day21a, day21b]
+    run 22 (print <=< rightOrFail) [day22a, day22b]
 ```
