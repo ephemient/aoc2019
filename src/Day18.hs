@@ -5,6 +5,7 @@ Description:    <https://adventofcode.com/2019/day/18 Day 18: Many-Worlds Interp
 {-# LANGUAGE FlexibleContexts, TypeApplications #-}
 module Day18 (day18a, day18b) where
 
+import Common (bfsM, dijkstraM, neighbors)
 import Control.Monad (guard)
 import Control.Monad.Cont (callCC, runCont)
 import Control.Monad.State (evalStateT, gets, modify)
@@ -21,10 +22,6 @@ import qualified Data.Map.Lazy as Map (assocs, delete, filter, fromList, keys, m
 import Data.Maybe (maybeToList)
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set (empty, foldr, fromList, insert, member, null, size)
-import Graph (bfsM, dijkstraM)
-
-neighbors :: (Num a) => (a, a) -> [(a, a)]
-neighbors (x, y) = [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
 
 mazePaths :: (Num a, Ord a, Ord b, Ord c) =>
     (c -> Bool) -> Map (a, a) (Maybe (Either b b)) -> Map (a, a) c -> Map c (Map c (Set b, Int))

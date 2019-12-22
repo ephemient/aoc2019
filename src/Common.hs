@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, TupleSections, TypeApplications, ViewPatterns #-}
-module Graph (bfsM, dijkstraM) where
+module Common (bfsM, dijkstraM, egcd, neighbors) where
 
 import Control.Monad ((>=>), filterM)
 import Control.Monad.State (evalStateT, gets, modify)
@@ -8,6 +8,18 @@ import Data.Heap (FstMinPolicy, Heap, HeapItem)
 import qualified Data.Heap as Heap (insert, singleton, view)
 import Data.List (foldl')
 import qualified Data.Set as Set (insert, member, singleton)
+
+-- |Extended GCD.
+--
+-- prop> gcd a b == (s, t, g) ==> a * s + b * t == g
+egcd :: (Integral a) => a -> a -> (a, a, a)
+egcd a 0 = (1, 0, a)
+egcd a b = (t, s - q * t, abs g) where
+    (q, r) = a `quotRem` b
+    (s, t, g) = egcd b r
+
+neighbors :: (Num a) => (a, a) -> [(a, a)]
+neighbors (x, y) = [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
 
 dijkstraM :: (HeapItem pol item, Traversable t, Monad m) =>
     (item -> m (t item)) -> Heap pol item -> m ()

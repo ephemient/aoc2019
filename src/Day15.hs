@@ -2,9 +2,10 @@
 Module:         Day15
 Description:    <https://adventofcode.com/2019/day/15 Day 15: Oxygen System>
 -}
-{-# LANGUAGE FlexibleContexts, TupleSections, TypeApplications, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, TupleSections, TypeApplications #-}
 module Day15 (day15a, day15b) where
 
+import Common (dijkstraM)
 import Control.Monad (filterM, when)
 import Control.Monad.Cont (callCC, runCont)
 import Control.Monad.RWS (evalRWS, evalRWST)
@@ -13,9 +14,8 @@ import Control.Monad.Trans (lift)
 import Control.Monad.Writer (tell)
 import Data.Functor (($>))
 import Data.Functor.Identity (Identity(..))
-import Data.Heap (FstMinPolicy, Heap, HeapItem(..))
-import qualified Data.Heap as Heap (insert, singleton, view)
-import Data.List (foldl')
+import Data.Heap (FstMinPolicy)
+import qualified Data.Heap as Heap (singleton)
 import Data.Maybe (catMaybes)
 import Data.Semigroup (Last(..))
 import Data.Set (Set)
@@ -40,13 +40,6 @@ advance (mem, base, ip) input = do
         runIntcodeT getOutput memory $ State (return input) base ip
     return (output, (mem', base', ip'))
 
-bfsWithM :: (HeapItem pol item, Traversable t, Monad m) =>
-    (item -> m (t item)) -> Heap pol item -> m ()
-bfsWithM f = bfsWithM' where
-    bfsWithM' (Heap.view -> Just (item, queue)) = f item >>=
-        bfsWithM' . foldl' (flip Heap.insert) queue
-    bfsWithM' _ = return ()
-
 neighbors :: (Num e, Num a, Ord a) => (a, a) -> [((a, a), e)]
 neighbors (x, y) =
     [((x, y - 1), 1), ((x, y + 1), 2), ((x - 1, y), 3), ((x + 1, y), 4)]
@@ -54,7 +47,7 @@ neighbors (x, y) =
 findOxygen :: (Vector v e, Integral e, Num a, Ord a, Monad m) =>
     (a -> (a, a) -> m b) -> v e -> m (Set (a, a))
 findOxygen f mem0 = Set.fromList . snd <$> evalRWST
-    (bfsWithM step $ Heap.singleton @FstMinPolicy (1, ((0, 0), (mem0, 0, 0))))
+    (dijkstraM step $ Heap.singleton @FstMinPolicy (1, ((0, 0), (mem0, 0, 0))))
     () (Set.singleton (0, 0)) where
     step (d, (pos, state)) = tell [pos] >>
         catMaybes <$> mapM (tryStep d state) (neighbors pos)
@@ -71,7 +64,7 @@ findOxygen f mem0 = Set.fromList . snd <$> evalRWST
 
 flood :: (Num a, Ord a) => Set (a, a) -> (a, a) -> Maybe Int
 flood pass start = fmap getLast $ snd $ evalRWS
-    (bfsWithM step $ Heap.singleton @FstMinPolicy (0, start)) () $
+    (dijkstraM step $ Heap.singleton @FstMinPolicy (0, start)) () $
     Set.delete start pass where
     step (d, pos) = tell (Just $ Last d) >>
         fmap (d + 1,) <$> filterM visit (fst <$> neighbors @Int pos)

@@ -5,6 +5,7 @@ Description:    <https://adventofcode.com/2019/day/20 Day 20: Donut Maze>
 {-# LANGUAGE TupleSections, ViewPatterns #-}
 module Day20 (day20a, day20b) where
 
+import Common (bfsM, neighbors)
 import Control.Monad (guard)
 import Control.Monad.Cont (callCC, runCont)
 import Data.Char (isAlpha)
@@ -16,7 +17,6 @@ import Data.Maybe (catMaybes, maybeToList)
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member, toList)
 import Data.Tuple (swap)
-import Graph (bfsM)
 
 parse :: String -> (Set (Int, Int), Map (Int, Int) String)
 parse (lines -> rows@(transpose -> cols)) = (maze, portals) where
@@ -33,9 +33,6 @@ parse (lines -> rows@(transpose -> cols)) = (maze, portals) where
 invertMap :: (Ord a, Ord b, Applicative t, Monoid (t a)) =>
     Map a b -> Map b (t a)
 invertMap = Map.fromListWith (<>) . map (fmap pure . swap) . Map.assocs
-
-neighbors :: (Num a) => (a, a) -> [(a, a)]
-neighbors (x, y) = [(x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)]
 
 day20a :: String -> Maybe Int
 day20a input = flip runCont id $ callCC $ \exit ->

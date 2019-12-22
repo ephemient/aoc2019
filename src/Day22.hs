@@ -3,8 +3,9 @@ Module:         Day22
 Description:    <https://adventofcode.com/2019/day/22 Day 22: Slam Shuffle>
 -}
 {-# LANGUAGE FlexibleContexts #-}
-module Day22 (Operation(..), applyTimes, day22a, day22b, egcd, mpow, parser) where
+module Day22 (Operation(..), applyTimes, day22a, day22b, mpow, parser) where
 
+import Common (egcd)
 import Data.Functor (($>), (<&>))
 import Data.List (foldl')
 import Data.Void (Void)
@@ -24,15 +25,6 @@ parser = choice
   , string "cut " *> signed (return ()) decimal <&> Cut
   , string "deal with increment " *> decimal <&> Stretch
   ] `sepEndBy` newline <* eof
-
--- |Extended GCD.
---
--- prop> gcd a b == (s, t, g) ==> a * s + b * t == g
-egcd :: (Integral a) => a -> a -> (a, a, a)
-egcd a 0 = (1, 0, a)
-egcd a b = (t, s - q * t, abs g) where
-    (q, r) = a `quotRem` b
-    (s, t, g) = egcd b r
 
 apply :: (Integral a) => a -> Operation a -> (a, a) -> (a, a)
 apply p Reverse (m, c) = ((-m) `mod` p, (-c - 1) `mod` p)
