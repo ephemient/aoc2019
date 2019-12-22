@@ -9,7 +9,9 @@ import qualified Data.Vector.Unboxed as Unboxed
 import Data.Void (Void)
 import Day22 (Operation(..), applyTimes, mpow, parser)
 import Test.Hspec (Spec, describe, it, shouldBe)
+import Test.Hspec.QuickCheck (prop)
 import Text.Megaparsec (parseMaybe)
+import Test.QuickCheck (Gen, Positive(..), (===), arbitrary, checkCoverage, choose, cover, listOf, oneof, suchThat)
 
 doOp :: (Vector v a, Vector v Int) => v a -> Operation Int -> v a
 doOp s Reverse = Vector.reverse s
@@ -26,6 +28,12 @@ referenceApply p ops x =
     iterate (foldl' doOp `flip` ops) (Vector.enumFromN 0 p) !! x
 testApply p ops x = Vector.generate p $ \i -> (m * i + c) `mod` p where
     (m, c) = mpow p (applyTimes p ops x) (-1 :: Int)
+
+operationGen :: Int -> Gen (Operation Int)
+operationGen p = oneof [return Reverse, cutGen, stretchGen] where
+    cutGen = Cut <$> choose (1 - p, p - 1)
+    stretchGen = Stretch <$> choose (1, p - 1) `suchThat` coprime
+    coprime x = gcd x p == 1
 
 sample1, sample2, sample3, sample4 :: String
 sample1 = unlines
@@ -70,3 +78,10 @@ spec = do
                 Vector.fromList [6, 3, 0, 7, 4, 1, 8, 5, 2, 9]
             testApply 10 ops4 1 `shouldBe`
                 Vector.fromList [9, 2, 5, 8, 1, 4, 7, 0, 3, 6]
+    describe "part 2" $
+        prop "implementation under test matches reference" $ do
+            Positive p <- arbitrary
+            ops <- listOf $ operationGen p
+            Positive x <- arbitrary
+            return . checkCoverage . cover 90 (not $ null ops) "non-trivial" $
+                testApply p ops x === referenceApply p ops x
