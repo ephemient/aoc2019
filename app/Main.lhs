@@ -137,6 +137,10 @@ import Day21 (day21a, day21b)
 ```haskell
 import Day22 (day22a, day22b)
 ```
+## [Day 23: Category Six](/src/Day23.hs)
+```haskell
+import Day23 (day23a, day23b)
+```
 
 ---
 
@@ -191,4 +195,5 @@ main = do
     run 20 (print <=< justOrFail) [day20a, day20b]
     run 21 (print <=< justOrFail <=< rightOrFail) [day21a, day21b]
     run 22 (print <=< rightOrFail) [day22a, day22b]
+    run 23 (>>= print) [day23a, day23b]
 ```

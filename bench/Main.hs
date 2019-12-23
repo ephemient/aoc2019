@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Control.Arrow ((>>>))
-import Criterion.Main (bench, bgroup, defaultMain, env, envWithCleanup, nf)
+import Criterion.Main (bench, bgroup, defaultMain, env, envWithCleanup, nf, nfIO)
 import Day1 (day1a, day1b)
 import Day2 (day2a, day2b)
 import Day3 (day3a, day3b)
@@ -24,6 +24,7 @@ import Day19 (day19a, day19b)
 import Day20 (day20a, day20b)
 import Day21 (day21a, day21b)
 import Day22 (day22a, day22b)
+import Day23 (day23a, day23b)
 import Paths_aoc2019 (getDataFileName)
 import System.Environment.Blank (getEnv, setEnv, unsetEnv)
 
@@ -128,4 +129,9 @@ main = defaultMain
       [ bench "part 1" $ nf day22a input
       , bench "part 2" $ nf day22b input
       ]
+  , envWithCleanup ((,) <$> getDayInput 21 <*> setTrace "0")
+        (unsetTrace . snd) $ fst >>> \input -> bgroup "Day 21"
+          [ bench "part 1" $ nfIO $ day23a input
+          , bench "part 2" $ nfIO $ day23b input
+          ]
   ]
