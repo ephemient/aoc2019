@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase, NamedFieldPuns, TupleSections, RecordWildCards #-}
-module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, liftMemory, run, runIntcodeT, setInput) where
+module Intcode (IntcodeT, Memory(..), State(..), evalIntcodeT, getOutput, getState, liftMemory, run, runIntcodeT, setInput) where
 
 import Control.Monad.Fail (MonadFail)
 import qualified Control.Monad.Fail as Fail (fail)
@@ -48,6 +48,9 @@ instance (MonadFail m) => MonadFail (IntcodeT e m) where
     fail msg = IntcodeT $ \_ _ -> Fail.fail msg
 
 instance MonadTrans (IntcodeT e) where lift m = IntcodeT $ \_ s -> (s,) <$> m
+
+getState :: (Monad m) => IntcodeT e m (State (IntcodeT e m) e)
+getState = IntcodeT $ \_ s -> return (s, s)
 
 setInput :: (Monad m) => IntcodeT e m e -> IntcodeT e m ()
 setInput input = IntcodeT $ \_ s -> return (s {input}, ())

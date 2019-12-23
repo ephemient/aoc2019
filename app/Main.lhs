@@ -195,5 +195,5 @@ main = do
     run 20 (print <=< justOrFail) [day20a, day20b]
     run 21 (print <=< justOrFail <=< rightOrFail) [day21a, day21b]
     run 22 (print <=< rightOrFail) [day22a, day22b]
-    run 23 (>>= print) [day23a, day23b]
+    run 23 (print <=< justOrFail <=< rightOrFail) [day23a, day23b]
 ```

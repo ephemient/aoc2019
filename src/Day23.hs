@@ -2,130 +2,121 @@
 Module:         Day23
 Description:    <https://adventofcode.com/2019/day/23 Day 23: Category Six>
 -}
-{-# LANGUAGE FlexibleContexts, LambdaCase, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, NamedFieldPuns, RecordWildCards, TupleSections, TypeApplications, ViewPatterns #-}
 module Day23 (day23a, day23b) where
 
-import Control.Concurrent (forkIO)
-import Control.Concurrent.MVar (MVar, modifyMVar, modifyMVar_, newEmptyMVar, newMVar, putMVar, takeMVar, tryPutMVar, tryTakeMVar)
-import Control.Concurrent.QSemN (QSemN, newQSemN, signalQSemN, waitQSemN)
-import Control.Monad (forM_, replicateM)
-import Control.Monad.Fix (fix)
+import Control.Arrow ((>>>))
+import Control.Monad (forM)
+import Control.Monad.Cont (callCC, runContT)
+import Control.Monad.Primitive (PrimMonad)
+import Control.Monad.ST (runST)
 import Control.Monad.Trans (lift)
-import Data.Functor (($>), void)
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Data.Maybe (fromMaybe)
-import Data.Set (Set)
-import qualified Data.Set as Set (delete, empty, insert, toList)
+import Data.Functor (($>))
+import Data.List.NonEmpty (nonEmpty)
+import qualified Data.List.NonEmpty as NonEmpty (last)
+import Data.List.Split (chunksOf)
+import Data.Map.Lazy ((!?))
+import qualified Data.Map as Map (findWithDefault, fromListWith)
+import Data.Primitive.MutVar (modifyMutVar, newMutVar, readMutVar, writeMutVar)
 import Data.Vector.Generic (Vector)
 import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Debug.Trace (traceM)
-import Intcode (IntcodeT, evalIntcodeT, getOutput, setInput)
+import Intcode (Memory, State(..), getOutput, getState, liftMemory, runIntcodeT, setInput)
+import Intcode.Diff (checkDiff, mem, wrapMemory)
 import Intcode.Vector (memory)
-import System.Timeout (timeout)
-import Text.Megaparsec (MonadParsec, parse, sepBy)
+import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
-import Text.Printf (printf)
 
 parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
 parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
 
-day23a :: String -> IO Int
-day23a input = do
-    let Right mem0 = parse @Void (parser @Unboxed.Vector @Int) "" input
-    channels <- replicateM 50 $ newMVar []
-    output <- newEmptyMVar
-    let ioLoop i = fix $ \self -> do
-            Just n <- getOutput
-            Just x <- getOutput
-            Just y <- getOutput
-            traceM $ printf "%d -> %d (%d, %d)" i n x y
-            lift $ if n == 255
-                then putMVar output (x, y)
-                else modifyMVar_ (channels !! n) $ return . (++ [(x, y)])
-            self
-        getInput i chan = fix $ \self ->
-            lift (modifyMVar chan takeHead) >>= \case
-                Nothing -> traceM (printf "%d <- no input" i) $> (-1)
-                Just (x, y) -> do
-                    traceM $ printf "%d <- (%d, %d)" i x y
-                    setInput (setInput self $> y) $> x
-        takeHead (i:is) = return (is, Just i)
-        takeHead _ = return ([], Nothing)
-    forM_ (zip [0..] channels) $ \(i, chan) -> forkIO $ do
-        mem <- memory mem0
-        evalIntcodeT (ioLoop i) mem $ setInput (getInput i chan) $> i
-    snd <$> takeMVar output
+newtype Computer m e =
+    Computer { runComputer :: [e] -> m ([e], Maybe (Computer m e)) }
 
-newIOLoop :: (Vector v Int) =>
-    v Int -> [MVar [(Int, Int)]] -> MVar (Int, Int) -> [MVar ()] -> QSemN -> MVar (Set Int) -> Int -> IO ()
-newIOLoop mem0 channels output unblocks sem blocked i = do
-    mem <- memory mem0
-    waiting <- newIORef 0 :: IO (IORef Int)
-    let channel = channels !! i
-        unblock = unblocks !! i
-        zero = do
-            lift $ writeIORef waiting 0
-            lift $ void $ tryPutMVar unblock ()
-            lift $ modifyMVar_ blocked $ return . Set.delete i
-        ioLoop :: IntcodeT Int IO ()
-        ioLoop = do
-            Just n <- getOutput <* zero
-            Just x <- getOutput <* zero
-            Just y <- getOutput <* zero
-            traceM $ printf "%d -> %d (%d, %d)" i n x y
-            if n == 255
-            then lift $ putMVar output (x, y)
-            else do
-                lift $ modifyMVar_ (channels !! n) $ return . (++ [(x, y)])
-                lift $ void $ tryPutMVar (unblocks !! n) ()
-            ioLoop
-        getInput :: IntcodeT Int IO Int
-        getInput = lift (modifyMVar channel takeHead) >>= \case
-            Nothing -> do
-                n <- lift $ readIORef waiting
-                traceM $ printf "%d <- no input #%d" i n
-                if n < 10
-                then do
-                    lift $ writeIORef waiting $! n + 1
-                    return (-1)
-                else do
-                    s <- lift $ modifyMVar blocked $ \s ->
-                        let s' = Set.insert i s in return (s', Set.toList s')
-                    traceM $ printf "%i is blocked (%s)" i $ show s
-                    lift $ void $ tryTakeMVar unblock
-                    lift $ signalQSemN sem 1
-                    lift $ takeMVar unblock
-                    lift $ waitQSemN sem 1
-                    getInput
-            Just (x, y) -> do
-                traceM $ printf "%d <- (%d, %d)" i x y
-                zero
-                setInput (setInput getInput $> y) $> x
-    evalIntcodeT ioLoop mem $ setInput getInput $> i
+newComputer :: (Integral e, PrimMonad m) => Memory m e -> m (Computer m e)
+newComputer delegate = do
+    diffable <- wrapMemory delegate
+    let mem' = liftMemory $ mem diffable
+        go state inputs = do
+            lastInput <- newMutVar False
+            outputsRef <- newMutVar []
+            flip runContT (save outputsRef) $ callCC $ \exit ->
+                runIntcodeT (collectOutputs lastInput outputsRef) mem'
+                    state {input = getInput exit lastInput inputs}
+        collectOutputs lastInput outputsRef = getOutput >>= \case
+            Nothing -> return False
+            Just output -> do
+                lift . lift $ writeMutVar lastInput False
+                lift . lift $ modifyMutVar outputsRef (output:)
+                collectOutputs lastInput outputsRef
+        getInput exit lastInput (i:inputs) =
+            setInput (getInput exit lastInput inputs) $> i
+        getInput exit lastInput _ = do
+            isLoop <- lift . lift $
+                (&&) <$> readMutVar lastInput <*> checkDiff diffable
+            if isLoop
+            then getState >>= lift . exit . (, True)
+            else lift (lift $ writeMutVar lastInput True) $> (-1)
+        save outputsRef (state, runnable) = do
+            outputs <- readMutVar outputsRef
+            let computer
+                  | runnable = Just . Computer $ go state
+                  | otherwise = Nothing
+            return (reverse outputs, computer)
+    return . Computer $ go State {input = undefined, base = 0, ip = 0}
+
+data RunState m e = RunState
+  { pendingInput :: [e]
+  , pendingOutput :: [e]
+  , next :: Maybe (Computer m e)
+  }
+
+newtype NAT m e a = NAT
+  { runNAT :: (NAT m e a -> [RunState m e] -> m a) -> [RunState m e] -> [e] -> m a
+  }
+
+day23 :: (Vector v e, Integral e, PrimMonad m) => NAT m e a -> Int -> v e -> m a
+day23 nat count mem0 = do
+    computers <- forM [0..count - 1] $ fromIntegral >>> \i -> do
+        computer <- memory mem0 >>= newComputer
+        return RunState
+          { pendingInput = [i], pendingOutput = [], next = Just computer }
+    monitor [] nat computers
   where
-    takeHead (cur:rest) = return (rest, Just cur)
-    takeHead _ = return ([], Nothing)
+    isRunnable RunState {pendingInput = []} = False
+    isRunnable RunState {next = Nothing} = False
+    isRunnable _ = True
+    monitor prev nat' computers
+      | (pre, RunState {next = Just computer, ..} : post) <-
+            break isRunnable computers = do
+            (newOutput, next) <- runComputer computer pendingInput
+            let (sends, leftover) = fmap concat . break ((/= 3) . length) .
+                    chunksOf 3 $ pendingOutput ++ newOutput
+                sends' = Map.fromListWith (++) [(n, xs) | n:xs <- sends]
+                appendInput n runState@RunState {pendingInput = pendingInput'}
+                  | Just newInput <- sends' !? n
+                  = runState {pendingInput = pendingInput' ++ newInput}
+                  | otherwise = runState
+                prev' = prev ++ Map.findWithDefault [] 255 sends'
+            monitor prev' nat' . zipWith appendInput [0..] $
+                pre ++ RunState [] leftover next : post
+      | otherwise = runNAT nat' (monitor []) computers prev
 
-day23b :: String -> IO Int
+day23a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
+day23a input = do
+    mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
+    let nat _ _ = return . fmap NonEmpty.last . nonEmpty
+    return $ runST $ day23 (NAT nat) 50 mem0
+
+day23b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day23b input = do
-    let Right mem0 = parse @Void (parser @Unboxed.Vector @Int) "" input
-    channels@(channel0:_) <- replicateM 50 $ newMVar []
-    output <- newEmptyMVar
-    unblocks@(unblock0:_) <- replicateM 50 $ newMVar ()
-    sem <- newQSemN 1
-    blocked <- newMVar Set.empty
-    mapM_ (forkIO . newIOLoop mem0 channels output unblocks sem blocked) [0..49]
-    let monitor prev = takeMVar output >>= monitor' prev
-        monitor' prev cur = timeout 1000 (waitQSemN sem 51) >>= \case
-            Nothing -> tryTakeMVar output >>= monitor' prev . fromMaybe cur
-            Just _ -> do
-                cur'@(x, y) <- fromMaybe cur <$> tryTakeMVar output
-                traceM $ printf "NAT <- (%d, %d)" x y
-                modifyMVar_ channel0 $ return . (++ [cur'])
-                void $ tryPutMVar unblock0 ()
-                signalQSemN sem 51
-                if Just y == prev then return y else monitor $ Just y
-    monitor Nothing
+    mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
+    let nat prev@(Just y) _ _ (fmap NonEmpty.last . nonEmpty -> Just y')
+          | y == y' = return prev
+        nat _ resume (computer0@RunState {pendingInput} : computers)
+            (reverse -> y:x:_) = resume (NAT . nat $ Just y) $
+                computer0 {pendingInput = pendingInput ++ [x, y]} : computers
+        nat _ _ _ _ = return Nothing
+    return $ runST $ day23 (NAT $ nat Nothing) 50 mem0

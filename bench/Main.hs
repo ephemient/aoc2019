@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Control.Arrow ((>>>))
-import Criterion.Main (bench, bgroup, defaultMain, env, envWithCleanup, nf, nfIO)
+import Criterion.Main (bench, bgroup, defaultMain, env, envWithCleanup, nf)
 import Day1 (day1a, day1b)
 import Day2 (day2a, day2b)
 import Day3 (day3a, day3b)
@@ -129,9 +129,8 @@ main = defaultMain
       [ bench "part 1" $ nf day22a input
       , bench "part 2" $ nf day22b input
       ]
-  , envWithCleanup ((,) <$> getDayInput 21 <*> setTrace "0")
-        (unsetTrace . snd) $ fst >>> \input -> bgroup "Day 21"
-          [ bench "part 1" $ nfIO $ day23a input
-          , bench "part 2" $ nfIO $ day23b input
-          ]
+  , env (getDayInput 23) $ \input -> bgroup "Day 23"
+      [ bench "part 1" $ nf day23a input
+      , bench "part 2" $ nf day23b input
+      ]
   ]
