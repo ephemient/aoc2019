@@ -67,11 +67,8 @@ newComputer delegate = do
             return (reverse outputs, computer)
     return . Computer $ go State {input = undefined, base = 0, ip = 0}
 
-data RunState m e = RunState
-  { pendingInput :: [e]
-  , pendingOutput :: [e]
-  , next :: Maybe (Computer m e)
-  }
+data RunState m e =
+    RunState { pendingInput :: [e], next :: Maybe (Computer m e) }
 
 newtype NAT m e a = NAT
   { runNAT :: (NAT m e a -> [RunState m e] -> m a) -> [RunState m e] -> [e] -> m a
@@ -81,8 +78,7 @@ day23 :: (Vector v e, Integral e, PrimMonad m) => NAT m e a -> Int -> v e -> m a
 day23 nat count mem0 = do
     computers <- forM [0..count - 1] $ fromIntegral >>> \i -> do
         computer <- memory mem0 >>= newComputer
-        return RunState
-          { pendingInput = [i], pendingOutput = [], next = Just computer }
+        return RunState { pendingInput = [i], next = Just computer }
     monitor [] nat computers
   where
     isRunnable RunState {pendingInput = []} = False
@@ -91,17 +87,16 @@ day23 nat count mem0 = do
     monitor prev nat' computers
       | (pre, RunState {next = Just computer, ..} : post) <-
             break isRunnable computers = do
-            (newOutput, next) <- runComputer computer pendingInput
-            let (sends, leftover) = fmap concat . break ((/= 3) . length) .
-                    chunksOf 3 $ pendingOutput ++ newOutput
-                sends' = Map.fromListWith (++) [(n, xs) | n:xs <- sends]
+            (output, next) <- runComputer computer pendingInput
+            let sends =
+                    Map.fromListWith (++) [(n, xs) | n:xs <- chunksOf 3 output]
                 appendInput n runState@RunState {pendingInput = pendingInput'}
-                  | Just newInput <- sends' !? n
+                  | Just newInput <- sends !? n
                   = runState {pendingInput = pendingInput' ++ newInput}
                   | otherwise = runState
-                prev' = prev ++ Map.findWithDefault [] 255 sends'
+                prev' = prev ++ Map.findWithDefault [] 255 sends
             monitor prev' nat' . zipWith appendInput [0..] $
-                pre ++ RunState [] leftover next : post
+                pre ++ RunState {pendingInput = [], ..} : post
       | otherwise = runNAT nat' (monitor []) computers prev
 
 day23a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
