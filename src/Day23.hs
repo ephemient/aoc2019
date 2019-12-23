@@ -32,8 +32,7 @@ import Text.Megaparsec.Char.Lexer (decimal, signed)
 parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
 parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
 
-newtype Computer m e =
-    Computer { runComputer :: [e] -> m ([e], Maybe (Computer m e)) }
+newtype Computer m e = Computer { runComputer :: [e] -> m ([e], Computer m e) }
 
 newComputer :: (Integral e, PrimMonad m) => Memory m e -> m (Computer m e)
 newComputer delegate = do
@@ -43,10 +42,10 @@ newComputer delegate = do
             lastInput <- newMutVar False
             outputsRef <- newMutVar []
             flip runContT (save outputsRef) $ callCC $ \exit ->
-                runIntcodeT (collectOutputs lastInput outputsRef) mem'
+                snd <$> runIntcodeT (collectOutputs lastInput outputsRef) mem'
                     state {input = getInput exit lastInput inputs}
         collectOutputs lastInput outputsRef = getOutput >>= \case
-            Nothing -> return False
+            Nothing -> getState
             Just output -> do
                 lift . lift $ writeMutVar lastInput False
                 lift . lift $ modifyMutVar outputsRef (output:)
@@ -57,52 +56,45 @@ newComputer delegate = do
             isLoop <- lift . lift $
                 (&&) <$> readMutVar lastInput <*> checkDiff diffable
             if isLoop
-            then getState >>= lift . exit . (, True)
+            then getState >>= lift . exit
             else lift (lift $ writeMutVar lastInput True) $> (-1)
-        save outputsRef (state, runnable) = do
-            outputs <- readMutVar outputsRef
-            let computer
-                  | runnable = Just . Computer $ go state
-                  | otherwise = Nothing
-            return (reverse outputs, computer)
+        save outputsRef state =
+            (, Computer $ go state) . reverse <$> readMutVar outputsRef
     return . Computer $ go State {input = undefined, base = 0, ip = 0}
 
-data RunState m e =
-    RunState { pendingInput :: [e], next :: Maybe (Computer m e) }
+data RunState m e = RunState { inputQueue :: [e], next :: Computer m e }
 
 newtype NAT m e a = NAT { runNAT :: (NAT m e a -> [e] -> m a) -> [e] -> m a }
 
 day23 :: (Vector v e, Integral e, PrimMonad m) => NAT m e a -> Int -> v e -> m a
 day23 nat count mem0 = do
     computers <- forM [0..count - 1] $ fromIntegral >>> \i -> do
-        computer <- memory mem0 >>= newComputer
-        return RunState { pendingInput = [i], next = Just computer }
+        next <- memory mem0 >>= newComputer
+        return RunState {inputQueue = [i], next}
     monitor [] nat computers
   where
     monitor prev nat' computers
-      | (pre, RunState {next = ~(Just computer), ..} : post) <-
-            span (null . pendingInput) computers
+      | (pre, RunState {next, ..} : post) <- span (null . inputQueue) computers
       = do
-            (output, next) <- runComputer computer pendingInput
+            (output, next') <- runComputer next inputQueue
             let sends = Map.fromListWith (++)
                     [(n, xs) | n:xs <- chunksOf 3 output]
-                appendInput n runState@RunState {pendingInput = pendingInput'}
+                appendInput n runState@RunState {inputQueue = inputQueue'}
                   | Just newInput <- sends !? n
-                  = runState {pendingInput = pendingInput' ++ newInput}
+                  = runState {inputQueue = inputQueue' ++ newInput}
                   | otherwise = runState
                 prev' = prev ++ Map.findWithDefault [] 255 sends
             monitor prev' nat' . zipWith appendInput [0..] $
-                pre ++ RunState {pendingInput = [], ..} : post
-      | ~(computer0@RunState {pendingInput} : post) <- computers
+                pre ++ RunState {inputQueue = [], next = next'} : post
+      | ~(computer0@RunState {inputQueue} : post) <- computers
       = let resume nat'' input = monitor [] nat'' $
-                computer0 {pendingInput = pendingInput ++ input} : post
+                computer0 {inputQueue = inputQueue ++ input} : post
         in runNAT nat' resume prev
 
 day23a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day23a input = do
     mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
-    let nat _ (_:y:_) = return $ Just y
-        nat _ _ = return Nothing
+    let nat _ = return . fmap NonEmpty.last . nonEmpty . take 2
     return $ runST $ day23 (NAT nat) 50 mem0
 
 day23b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
