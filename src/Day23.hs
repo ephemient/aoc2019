@@ -39,7 +39,7 @@ newComputer delegate = do
     diffable <- wrapMemory delegate
     let mem' = liftMemory $ mem diffable
         go state inputs = do
-            lastInput <- newMutVar False
+            lastInput <- newMutVar Nothing
             outputsRef <- newMutVar []
             flip runContT (save outputsRef) $ callCC $ \exit ->
                 snd <$> runIntcodeT (collectOutputs lastInput outputsRef) mem'
@@ -47,17 +47,18 @@ newComputer delegate = do
         collectOutputs lastInput outputsRef = getOutput >>= \case
             Nothing -> getState
             Just output -> do
-                lift . lift $ writeMutVar lastInput False
+                lift . lift $ writeMutVar lastInput Nothing
                 lift . lift $ modifyMutVar outputsRef (output:)
                 collectOutputs lastInput outputsRef
         getInput exit lastInput (i:inputs) =
             setInput (getInput exit lastInput inputs) $> i
         getInput exit lastInput _ = do
-            isLoop <- lift . lift $
-                (&&) <$> readMutVar lastInput <*> checkDiff diffable
+            State {base, ip} <- getState
+            isLoop <- lift . lift $ (&&) . (== Just (base, ip)) <$>
+                readMutVar lastInput <*> checkDiff diffable
             if isLoop
             then getState >>= lift . exit
-            else lift (lift $ writeMutVar lastInput True) $> (-1)
+            else lift (lift . writeMutVar lastInput $ Just (base, ip)) $> (-1)
         save outputsRef state =
             (, Computer $ go state) . reverse <$> readMutVar outputsRef
     return . Computer $ go State {input = undefined, base = 0, ip = 0}
