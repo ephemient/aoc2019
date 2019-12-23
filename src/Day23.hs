@@ -81,7 +81,7 @@ day23 nat count mem0 = do
   where
     monitor prev nat' computers
       | (pre, RunState {next = ~(Just computer), ..} : post) <-
-            break (not . null . pendingInput) computers
+            span (null . pendingInput) computers
       = do
             (output, next) <- runComputer computer pendingInput
             let sends = Map.fromListWith (++)
@@ -101,7 +101,8 @@ day23 nat count mem0 = do
 day23a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day23a input = do
     mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
-    let nat _ = return . fmap NonEmpty.last . nonEmpty
+    let nat _ (_:y:_) = return $ Just y
+        nat _ _ = return Nothing
     return $ runST $ day23 (NAT nat) 50 mem0
 
 day23b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
