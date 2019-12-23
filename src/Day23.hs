@@ -70,9 +70,7 @@ newComputer delegate = do
 data RunState m e =
     RunState { pendingInput :: [e], next :: Maybe (Computer m e) }
 
-newtype NAT m e a = NAT
-  { runNAT :: (NAT m e a -> [RunState m e] -> m a) -> [RunState m e] -> [e] -> m a
-  }
+newtype NAT m e a = NAT { runNAT :: (NAT m e a -> [e] -> m a) -> [e] -> m a }
 
 day23 :: (Vector v e, Integral e, PrimMonad m) => NAT m e a -> Int -> v e -> m a
 day23 nat count mem0 = do
@@ -81,15 +79,13 @@ day23 nat count mem0 = do
         return RunState { pendingInput = [i], next = Just computer }
     monitor [] nat computers
   where
-    isRunnable RunState {pendingInput = []} = False
-    isRunnable RunState {next = Nothing} = False
-    isRunnable _ = True
     monitor prev nat' computers
-      | (pre, RunState {next = Just computer, ..} : post) <-
-            break isRunnable computers = do
+      | (pre, RunState {next = ~(Just computer), ..} : post) <-
+            break (not . null . pendingInput) computers
+      = do
             (output, next) <- runComputer computer pendingInput
-            let sends =
-                    Map.fromListWith (++) [(n, xs) | n:xs <- chunksOf 3 output]
+            let sends = Map.fromListWith (++)
+                    [(n, xs) | n:xs <- chunksOf 3 output]
                 appendInput n runState@RunState {pendingInput = pendingInput'}
                   | Just newInput <- sends !? n
                   = runState {pendingInput = pendingInput' ++ newInput}
@@ -97,21 +93,22 @@ day23 nat count mem0 = do
                 prev' = prev ++ Map.findWithDefault [] 255 sends
             monitor prev' nat' . zipWith appendInput [0..] $
                 pre ++ RunState {pendingInput = [], ..} : post
-      | otherwise = runNAT nat' (monitor []) computers prev
+      | ~(computer0@RunState {pendingInput} : post) <- computers
+      = let resume nat'' input = monitor [] nat'' $
+                computer0 {pendingInput = pendingInput ++ input} : post
+        in runNAT nat' resume prev
 
 day23a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day23a input = do
     mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
-    let nat _ _ = return . fmap NonEmpty.last . nonEmpty
+    let nat _ = return . fmap NonEmpty.last . nonEmpty
     return $ runST $ day23 (NAT nat) 50 mem0
 
 day23b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day23b input = do
     mem0 <- parse @Void (parser @Unboxed.Vector @Int) "" input
-    let nat prev@(Just y) _ _ (fmap NonEmpty.last . nonEmpty -> Just y')
+    let nat prev@(Just y) _ (fmap NonEmpty.last . nonEmpty -> Just y')
           | y == y' = return prev
-        nat _ resume (computer0@RunState {pendingInput} : computers)
-            (reverse -> y:x:_) = resume (NAT . nat $ Just y) $
-                computer0 {pendingInput = pendingInput ++ [x, y]} : computers
-        nat _ _ _ _ = return Nothing
+        nat _ resume (reverse -> y:x:_) = resume (NAT . nat $ Just y) [x, y]
+        nat _ _ _ = return Nothing
     return $ runST $ day23 (NAT $ nat Nothing) 50 mem0
