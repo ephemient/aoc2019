@@ -7,13 +7,11 @@ module Day21 (Command(..), Register(..), day21a, day21b, programA, programB) whe
 
 import Control.Monad.ST (runST)
 import Data.List (init)
-import Data.List.NonEmpty (nonEmpty)
-import qualified Data.List.NonEmpty as NonEmpty (last)
 import Data.Vector.Generic (Vector)
 import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Intcode.Char (runTraced)
+import Intcode.Char (runAsciiTraceUntilInt)
 import Intcode.Vector (memory)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
 import Text.Megaparsec.Char (char)
@@ -33,13 +31,13 @@ programB = init programA ++ [NOT J T, OR E T, OR H T, AND T J, RUN]
 day21a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day21a input = do
     mem0 <- parse (parser @Unboxed.Vector) "" input
-    return . fmap NonEmpty.last . nonEmpty $ runST $ do
+    return $ runST $ do
         mem <- memory mem0
-        runTraced mem . unlines $ show <$> programA
+        runAsciiTraceUntilInt mem . unlines $ show <$> programA
 
 day21b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day21b input = do
     mem0 <- parse (parser @Unboxed.Vector) "" input
-    return . fmap NonEmpty.last . nonEmpty $ runST $ do
+    return $ runST $ do
         mem <- memory mem0
-        runTraced mem . unlines $ show <$> programB
+        runAsciiTraceUntilInt mem . unlines $ show <$> programB

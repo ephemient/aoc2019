@@ -10,8 +10,6 @@ import Control.Monad.ST (runST)
 import Data.Char (chr)
 import Data.Function (on)
 import Data.List (groupBy, inits, intercalate, intersperse, stripPrefix, tails)
-import Data.List.NonEmpty (nonEmpty)
-import qualified Data.List.NonEmpty as NonEmpty (last)
 import Data.List.Split (splitOn)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (filter, fromSet, keys, null, updateLookupWithKey)
@@ -20,7 +18,7 @@ import Data.Vector.Generic (Vector, (//))
 import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Intcode.Char (runTraced)
+import Intcode.Char (runAsciiTraceUntilInt)
 import Intcode.Vector (memory)
 import qualified Intcode.Vector (run)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
@@ -113,6 +111,6 @@ day17b input = do
           , intercalate "," programC
           , "n"
           ]
-    return . fmap NonEmpty.last . nonEmpty $ runST $ do
+    return $ runST $ do
         mem <- memory $ mem0 // [(0, 2)]
-        runTraced mem intcodeInput
+        runAsciiTraceUntilInt mem intcodeInput
