@@ -7,7 +7,7 @@ class Day19(lines: List<String>) {
     private fun f(x: Long, y: Long): Boolean =
         Intcode(ints.toMutableList()).runBlocking(listOf(x, y)).single() != 0L
 
-    fun part1(): Int = (0L..49L).sumBy { x -> (0L..49L).count{ y -> f(x, y) } }
+    fun part1(): Int = (0L..49L).sumBy { x -> (0L..49L).count { y -> f(x, y) } }
 
     fun part2(): Long {
         var x = 0L
