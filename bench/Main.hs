@@ -26,6 +26,7 @@ import Day21 (day21a, day21b)
 import Day22 (day22a, day22b)
 import Day23 (day23a, day23b)
 import Day24 (day24a, day24b)
+import Day25 (day25)
 import Paths_aoc2019 (getDataFileName)
 import System.Environment.Blank (getEnv, setEnv, unsetEnv)
 
@@ -138,4 +139,6 @@ main = defaultMain
       [ bench "part 1" $ nf day24a input
       , bench "part 2" $ nf ((!! 200) . day24b) input
       ]
+  , envWithCleanup ((,) <$> getDayInput 25 <*> setTrace "0")
+        (unsetTrace . snd) $ fst >>> bench "Day 25" . nf day25
   ]

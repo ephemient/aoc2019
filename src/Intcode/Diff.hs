@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
-module Intcode.Diff (DiffableMemory, checkDiff, mem, wrapMemory) where
+{-# LANGUAGE NamedFieldPuns, RecordWildCards #-}
+module Intcode.Diff (DiffableMemory, checkDiff, getDiffs, mem, undoDiffs, wrapMemory) where
 
 import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Functor (($>))
@@ -19,6 +19,12 @@ checkDiff DiffableMemory {..} = do
     diff <- readMutVar diffRef <* writeMutVar diffRef Map.empty
     mapM_ (uncurry $ writeMem delegate) $ Map.assocs diff
     writeMutVar diffRef Map.empty $> Map.null diff
+
+getDiffs :: (PrimMonad m, Ord e) => DiffableMemory m e -> m (Map e e)
+getDiffs DiffableMemory {diffRef} = readMutVar diffRef
+
+undoDiffs :: (PrimMonad m, Ord e) => DiffableMemory m e -> m ()
+undoDiffs DiffableMemory {diffRef} = writeMutVar diffRef Map.empty
 
 mem :: (PrimMonad m, Ord e) => DiffableMemory m e -> Memory m e
 mem DiffableMemory {delegate = Memory {..}, ..} = Memory

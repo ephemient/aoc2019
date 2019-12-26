@@ -56,7 +56,7 @@ setInput :: (Monad m) => IntcodeT e m e -> IntcodeT e m ()
 setInput input = IntcodeT $ \_ s -> return (s {input}, ())
 
 getOutput :: (Monad m, Integral e) => IntcodeT e m (Maybe e)
-getOutput = IntcodeT $ \mem@Memory {..} -> fix $ \runOutput state@State {..} -> do
+getOutput = IntcodeT $ \mem@Memory {..} -> fix $ \loop state@State {..} -> do
     op <- fromIntegral <$> readMem ip
     let arg n = case op `quot` 10 ^ (n + 1 :: Int) `rem` 10 :: Int of
             0 -> readMem (ip + fromIntegral n)
@@ -67,22 +67,22 @@ getOutput = IntcodeT $ \mem@Memory {..} -> fix $ \runOutput state@State {..} -> 
         putArg n v = arg n >>= flip writeMem v
         binOp f = do
             f <$> getArg 1 <*> getArg 2 >>= putArg 3
-            runOutput state {ip = ip + 4}
+            loop state {ip = ip + 4}
         jmp p = p <$> getArg 1 >>= \case
-            False -> runOutput state {ip = ip + 3}
-            True -> getArg 2 >>= \ip' -> runOutput state {ip = ip'}
+            False -> loop state {ip = ip + 3}
+            True -> getArg 2 >>= \ip' -> loop state {ip = ip'}
     case op `rem` 100 of
         1 -> binOp (+)
         2 -> binOp (*)
         3 -> do (state', v) <- runIntcodeT input mem state
                 putArg 1 v
-                runOutput state' {ip = ip + 2}
+                loop state' {ip = ip + 2}
         4 -> (state {ip = ip + 2},) . Just <$> getArg 1
         5 -> jmp (/= 0)
         6 -> jmp (== 0)
         7 -> binOp $ \x y -> if x < y then 1 else 0
         8 -> binOp $ \x y -> if x == y then 1 else 0
-        9 -> getArg 1 >>= \v -> runOutput state {base = base + v, ip = ip + 2}
+        9 -> getArg 1 >>= \v -> loop state {base = base + v, ip = ip + 2}
         99 -> return (state, Nothing)
         _ -> fail "bad opcode"
 

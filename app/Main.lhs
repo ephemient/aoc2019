@@ -145,6 +145,10 @@ import Day23 (day23a, day23b)
 ```haskell
 import Day24 (day24a, day24b)
 ```
+## [Day 25: Cryostasis](/src/Day25.hs)
+```haskell
+import Day25 (day25)
+```
 
 ---
 
@@ -201,4 +205,5 @@ main = do
     run 22 (print <=< rightOrFail) [day22a, day22b]
     run 23 (print <=< justOrFail <=< rightOrFail) [day23a, day23b]
     run 24 (print <=< justOrFail) [day24a, Just . (!! 200) . day24b]
+    run 25 (print <=< rightOrFail) [day25]
 ```
