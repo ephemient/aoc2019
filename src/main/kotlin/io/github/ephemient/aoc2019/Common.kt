@@ -3,6 +3,31 @@ package io.github.ephemient.aoc2019
 
 import java.util.PriorityQueue
 
+fun properMod(a: Long, m: Long): Long {
+    check(m > 0)
+    val b = a % m
+    return if (b < 0) { m + b } else b
+}
+
+fun timesMod(a: Long, b: Long, m: Long): Long {
+    check(m in 1L until 0x3FFFFFFFFFFFFFFFL)
+    check(a in 0L until m)
+    check(b in 0L until m)
+    if (java.lang.Long.numberOfLeadingZeros(a) + java.lang.Long.numberOfLeadingZeros(b) > 64) {
+        return a * b % m
+    }
+    val ah = a shr 32
+    val al = a and 0xFFFFFFFFL
+    val bh = b shr 32
+    val bl = b and 0xFFFFFFFFL
+    var x = java.lang.Long.remainderUnsigned(ah * bh, m)
+    repeat(64) { x = java.lang.Long.remainderUnsigned(2 * x, m) }
+    var y = java.lang.Long.remainderUnsigned(ah * bl + al * bh, m)
+    repeat(32) { y = java.lang.Long.remainderUnsigned(2 * y, m) }
+    val z = java.lang.Long.remainderUnsigned(x + al * bl, m)
+    return java.lang.Long.remainderUnsigned(y + z, m)
+}
+
 fun <T : Comparable<T>> Iterable<T>.minMax(): Pair<T, T>? = minMaxBy(naturalOrder())
 
 fun <T> Iterable<T>.minMaxBy(comparator: Comparator<in T>): Pair<T, T>? {
