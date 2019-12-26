@@ -3,6 +3,18 @@ package io.github.ephemient.aoc2019
 
 import java.util.PriorityQueue
 
+fun <T : Comparable<T>> Iterable<T>.minMax(): Pair<T, T>? = minMaxBy(naturalOrder())
+
+fun <T> Iterable<T>.minMaxBy(comparator: Comparator<in T>): Pair<T, T>? {
+    val (min, max) = fold(Pair<T?, T?>(null, null)) { (min, max), value ->
+        Pair(
+            min?.let { minOf(it, value, comparator) } ?: value,
+            max?.let { maxOf(it, value, comparator) } ?: value
+        )
+    }
+    return if (min != null && max != null) { min to max } else { null }
+}
+
 interface SearchScope<T> {
     val focus: T
     val priority: Int
