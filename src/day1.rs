@@ -15,7 +15,11 @@ where
     I: IntoIterator<Item = &'a S>,
     S: AsRef<str> + 'a,
 {
-    Ok(util::parse_many(lines)?.iter().cloned().filter_map(fuel).sum())
+    Ok(util::parse_many(lines)?
+        .iter()
+        .cloned()
+        .filter_map(fuel)
+        .sum())
 }
 
 pub fn part2<'a, I, S>(lines: I) -> Result<i32, Box<dyn Error + Send + Sync>>
