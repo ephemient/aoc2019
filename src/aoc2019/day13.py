@@ -1,73 +1,47 @@
 from aoc2019 import intcode
+from aoc2019.intcode import Intcode
 import asyncio
 import fileinput
 
 
-class Draw:
-    def __init__(self):
-        self.blocks = set()
-        self.state = 'X'
-
-    async def __call__(self, value):
-        if self.state == 'X':
-            self.x = value
-            self.state = 'Y'
-        elif self.state == 'Y':
-            self.y = value
-            self.state = 'OUTPUT'
-        elif self.state == 'OUTPUT':
-            if value == 2:
-                self.blocks.add((self.x, self.y))
-            else:
-                self.blocks.discard((self.x, self.y))
-            self.state = 'X'
-
-
-class Bot:
-    def __init__(self):
-        self.ball = None
-        self.paddle = None
-        self.score = None
-        self.state = 'X'
-
-    async def input(self):
-        if self.ball is not None and self.paddle is not None:
-            if self.ball < self.paddle:
-                return -1
-            elif self.ball > self.paddle:
-                return 1
-        return 0
-
-    async def output(self, value):
-        if self.state == 'X':
-            self.x = value
-            self.state = 'Y'
-        elif self.state == 'Y':
-            self.y = value
-            self.state = 'OUTPUT'
-        elif self.state == 'OUTPUT':
-            if self.x == -1 and self.y == 0:
-                self.score = value
-            elif value == 3:
-                self.paddle = self.x
-            elif value == 4:
-                self.ball = self.x
-            self.state = 'X'
-
-
 def part1(lines):
+    blocks = set()
+    for [x, y, value] in zip(
+            *
+        [iter(intcode.run([int(s.strip())
+                           for s in lines[0].split(',')]))] * 3):
+        if value == 2:
+            blocks.add((x, y))
+        else:
+            blocks.discard((x, y))
+    return len(blocks)
+
+
+async def part2_async(lines):
     mem = [int(s.strip()) for s in lines[0].split(',')]
-    draw = Draw()
-    asyncio.run(intcode.run_async(mem, None, draw))
-    return len(draw.blocks)
+    mem[0] = 2
+
+    async def input():
+        return -1 if ball < paddle else 1 if ball > paddle else 0
+
+    aiter, score = Intcode(mem, input).__aiter__(), None
+    try:
+        while True:
+            x = await aiter.__anext__()
+            y = await aiter.__anext__()
+            value = await aiter.__anext__()
+            if x == -1 and y == 0:
+                score = value
+            elif value == 3:
+                paddle = x
+            elif value == 4:
+                ball = x
+    except StopAsyncIteration as _:
+        return score
 
 
 def part2(lines):
-    mem = [int(s.strip()) for s in lines[0].split(',')]
-    mem[0] = 2
-    bot = Bot()
-    asyncio.run(intcode.run_async(mem, bot.input, bot.output))
-    return bot.score
+    return asyncio.run(part2_async(lines))
 
 
 parts = (part1, part2)

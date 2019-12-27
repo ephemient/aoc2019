@@ -6,7 +6,7 @@ def part1(lines):
     mem = list(map(int, lines[0].split(',')))
     mem[1] = 12
     mem[2] = 2
-    intcode.run(mem, ())
+    intcode.run(mem)
     return mem[0]
 
 
@@ -17,7 +17,7 @@ def part2(lines):
             mem = mem0[:]
             mem[1] = noun
             mem[2] = verb
-            intcode.run(mem, ())
+            intcode.run(mem)
             if mem[0] == 19690720:
                 return 100 * noun + verb
 

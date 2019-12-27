@@ -116,8 +116,7 @@ def part2(lines):
     program = [int(s.strip()) for s in lines[0].split(',')]
     scaffold = Scaffold(program[:])
     input = '\n'.join(
-        next(result for path in scaffold.paths()
-             for result in compress(path)))
+        next(result for path in scaffold.paths() for result in compress(path)))
     program[0] = 2
     for x in intcode.run(program, [ord(c) for c in f'{input}\nn\n']):
         if x > 255:

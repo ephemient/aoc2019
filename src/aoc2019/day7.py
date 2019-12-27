@@ -1,7 +1,13 @@
-from aoc2019 import intcode
+from aoc2019.intcode import Intcode
 import asyncio
 import fileinput
 from itertools import permutations
+
+
+async def run_async(mem, input, output):
+    async for value in Intcode(mem, input):
+        await output(value)
+    return value
 
 
 async def amplify(mem, order):
@@ -22,8 +28,8 @@ async def amplify(mem, order):
         await channel.put(n)
     await channels[0].put(0)
     for input, output in zip(channels, channels[1:]):
-        asyncio.create_task(intcode.run_async(mem[:], input.get, output.put))
-    return await intcode.run_async(mem[:], channels[-1].get, channels[0].put)
+        asyncio.create_task(run_async(mem[:], input.get, output.put))
+    return await run_async(mem[:], channels[-1].get, channels[0].put)
 
 
 async def max_order(mem, orders):

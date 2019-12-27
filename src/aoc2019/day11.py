@@ -1,38 +1,29 @@
-from aoc2019 import intcode
+from aoc2019.intcode import Intcode
 import asyncio
 import fileinput
 
 
-class Bot:
-    def __init__(self, start):
-        self.grid = {(0, 0): start}
-        self.x = 0
-        self.y = 0
-        self.dx = 0
-        self.dy = 1
-        self.turning = False
-
-    async def input(self):
-        return int(self.grid.get((self.x, self.y), False))
-
-    async def output(self, value):
-        if self.turning:
-            if value:
-                self.dx, self.dy = self.dy, -self.dx
-            else:
-                self.dx, self.dy = -self.dy, self.dx
-            self.x += self.dx
-            self.y += self.dy
-            self.turning = False
-        else:
-            self.grid[(self.x, self.y)] = bool(value)
-            self.turning = True
-
-
 async def walk(mem, start):
-    bot = Bot(start)
-    await intcode.run_async(mem, bot.input, bot.output)
-    return bot.grid
+    grid = {(0, 0): start}
+    x, y = 0, 0
+    dx, dy = 0, 1
+
+    async def input():
+        return int(grid.get((x, y), False))
+
+    aiter = Intcode(mem, input).__aiter__()
+    try:
+        while True:
+            grid[x, y] = bool(await aiter.__anext__())
+            if await aiter.__anext__():
+                dx, dy = dy, -dx
+            else:
+                dx, dy = -dy, dx
+            x += dx
+            y += dy
+    except StopAsyncIteration as _:
+        pass
+    return grid
 
 
 def part1(lines):

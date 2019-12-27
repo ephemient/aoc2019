@@ -1,23 +1,97 @@
 import asyncio
 
 
-class async_next:
-    def __init__(self, iterable):
-        self.iterator = iter(iterable)
+class Intcode(object):
+    def __init__(self, mem, input=()):
+        self.mem = mem
+        self.base = 0
+        self.ip = 0
+        self.set_input(input)
 
-    async def __call__(self):
-        return next(self.iterator)
+    def set_input(self, input):
+        if callable(input):
+            self._input = input
+            return
+        try:
+            self._input = input.__aiter__().__anext__
+            return
+        except AttributeError as _:
+            pass
+        it = iter(input)
+
+        async def aiter():
+            try:
+                return next(it)
+            except StopIteration as e:
+                raise StopAsyncIteration(e)
+
+        self._input = aiter
+
+    def _index(self, n):
+        mode = self.mem[self.ip] // 10**(n + 1) % 10
+        try:
+            if mode == 0:
+                return self.mem[self.ip + n]
+            elif mode == 1:
+                return self.ip + n
+            elif mode == 2:
+                return self.base + self.mem[self.ip + n]
+            else:
+                raise RuntimeError(f'bad mode {mode}')
+        except IndexError as _:
+            return 0
+
+    def __getitem__(self, n):
+        i = self._index(n)
+        return self.mem[i] if i < len(self.mem) else 0
+
+    def __setitem__(self, n, value):
+        i = self._index(n)
+        if i < len(self.mem):
+            self.mem[i] = value
+        else:
+            self.mem.extend(0 for _ in range(len(self.mem), i))
+            self.mem.append(value)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        while True:
+            op = self.mem[self.ip] % 100
+            if op == 1:
+                self[3] = self[1] + self[2]
+                self.ip += 4
+            elif op == 2:
+                self[3] = self[1] * self[2]
+                self.ip += 4
+            elif op == 3:
+                self[1] = await self._input()
+                self.ip += 2
+            elif op == 4:
+                output = self[1]
+                self.ip += 2
+                return output
+            elif op == 5:
+                self.ip = self[2] if self[1] else self.ip + 3
+            elif op == 6:
+                self.ip = self[2] if not self[1] else self.ip + 3
+            elif op == 7:
+                self[3] = int(self[1] < self[2])
+                self.ip += 4
+            elif op == 8:
+                self[3] = int(self[1] == self[2])
+                self.ip += 4
+            elif op == 9:
+                self.base += self[1]
+                self.ip += 2
+            elif op == 99:
+                raise StopAsyncIteration()
+            else:
+                raise RuntimeError(f'bad opcode {self.mem[self.ip]}')
 
 
-class async_collector:
-    def __init__(self):
-        self.result = []
-
-    async def __call__(self, value):
-        self.result.append(value)
-
-
-def run(mem, input):
+def run(mem, input=()):
     '''
     >>> run([3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8], [7])
     [0]
@@ -69,74 +143,9 @@ def run(mem, input):
     [1125899906842624]
     '''
     async def async_work():
-        output = async_collector()
-        await run_async(mem, async_next(input), output)
-        return output.result
+        output = []
+        async for value in Intcode(mem, input):
+            output.append(value)
+        return output
 
     return asyncio.run(async_work())
-
-
-async def run_async(mem, input, output):
-    ip, base = 0, 0
-    last_output = None
-
-    def index(n):
-        mode = mem[ip] // 10**(n + 1) % 10
-        try:
-            if mode == 0:
-                return mem[ip + n]
-            elif mode == 1:
-                return ip + n
-            elif mode == 2:
-                return base + mem[ip + n]
-            else:
-                raise RuntimeError(f'bad mode {mode}')
-        except IndexError as _:
-            return 0
-
-    def get_arg(n):
-        try:
-            return mem[index(n)]
-        except IndexError as _:
-            return 0
-
-    def set_arg(n, value):
-        i = index(n)
-        if i < len(mem):
-            mem[index(n)] = value
-        else:
-            mem.extend(0 for _ in range(len(mem), i))
-            mem.append(value)
-
-    while True:
-        op = mem[ip] % 100
-        if op == 1:
-            set_arg(3, get_arg(1) + get_arg(2))
-            ip += 4
-        elif op == 2:
-            set_arg(3, get_arg(1) * get_arg(2))
-            ip += 4
-        elif op == 3:
-            set_arg(1, await input())
-            ip += 2
-        elif op == 4:
-            last_output = get_arg(1)
-            await output(last_output)
-            ip += 2
-        elif op == 5:
-            ip = get_arg(2) if get_arg(1) else ip + 3
-        elif op == 6:
-            ip = get_arg(2) if not get_arg(1) else ip + 3
-        elif op == 7:
-            set_arg(3, int(get_arg(1) < get_arg(2)))
-            ip += 4
-        elif op == 8:
-            set_arg(3, int(get_arg(1) == get_arg(2)))
-            ip += 4
-        elif op == 9:
-            base += get_arg(1)
-            ip += 2
-        elif op == 99:
-            return last_output
-        else:
-            raise RuntimeError(f'bad opcode {mem[ip]}')

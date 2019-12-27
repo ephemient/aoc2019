@@ -1,4 +1,4 @@
-from aoc2019 import intcode
+from aoc2019.intcode import Intcode
 import asyncio
 from collections import deque
 import fileinput
@@ -8,12 +8,9 @@ def neighbors(x, y):
     return [((x, y - 1), 1), ((x, y + 1), 2), ((x - 1, y), 3), ((x + 1, y), 4)]
 
 
-def path(src, dst, free):
-    if src == dst:
-        return []
-    seen = set()
-    queue = deque(((src, []), ))
-    while True:
+def path(free, src, dst):
+    queue, seen = deque(((src, []), )), {src}
+    while queue:
         pos, path = queue.popleft()
         for pos2, d in neighbors(*pos):
             if pos2 == dst:
@@ -22,6 +19,7 @@ def path(src, dst, free):
                 continue
             queue.append((pos2, path + [(pos2, d)]))
             seen.add(pos2)
+    return path
 
 
 async def explore(mem):
@@ -30,16 +28,14 @@ async def explore(mem):
     oxygen = None
     pending = {(0, 0)}
     pos = 0, 0
-
-    input, output = asyncio.Queue(), asyncio.Queue()
-    task = asyncio.create_task(intcode.run_async(mem, input.get, output.put))
-
+    vm = Intcode(mem)
+    aiter = vm.__aiter__()
     while pending:
         target, value = pending.pop(), 1
         visited.add(target)
-        for pos2, d in path(pos, target, free):
-            await input.put(d)
-            value = await output.get()
+        for pos2, d in path(free, pos, target):
+            vm.set_input((d, ))
+            value = await aiter.__anext__()
             if value == 0:
                 break
             pos = pos2
@@ -49,21 +45,19 @@ async def explore(mem):
             free.add(pos)
         pending.update(pos2 for pos2, _ in neighbors(*pos)
                        if pos2 not in visited)
-
-    task.cancel()
     return oxygen, free
 
 
 def part1(lines):
     oxygen, free = asyncio.run(
         explore([int(s.strip()) for s in lines[0].split(',')]))
-    return len(path((0, 0), oxygen, free))
+    return len(path(free, (0, 0), oxygen))
 
 
 def part2(lines):
     oxygen, free = asyncio.run(
         explore([int(s.strip()) for s in lines[0].split(',')]))
-    return max(len(path(oxygen, pos, free)) for pos in free)
+    return len(path(free, oxygen, None))
 
 
 parts = (part1, part2)
