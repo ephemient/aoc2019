@@ -29,10 +29,7 @@ play f acc mem0 = runST $ do
             let acc'' = f x y e acc'
                 paddle' = if e == 3 then Just x else paddle
                 ball' = if e == 4 then Just x else ball
-            setInput $ return $ case compare <$> paddle' <*> ball' of
-                Just LT -> 1
-                Just GT -> -1
-                _ -> 0
+            setInput $ return $ maybe 0 signum $ (-) <$> ball' <*> paddle'
             loop acc'' paddle' ball'
     evalIntcodeT (loop acc Nothing Nothing) mem $ return 0
 
