@@ -23,8 +23,6 @@ import qualified Data.Map.Lazy as Map (assocs, empty, insertWith, union, singlet
 import Data.Maybe (isNothing)
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set (delete, empty, insert, lookupMin, member, powerSet)
-import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Debug.Trace (traceM)
 import GHC.Generics (Generic)
@@ -33,13 +31,10 @@ import qualified Intcode (State(..), setInput)
 import Intcode.Char (getOutputLine, makeStringInput)
 import Intcode.Diff (DiffableMemory, checkDiff, getDiffs, undoDiffs, wrapMemory)
 import qualified Intcode.Diff as Diff (mem)
-import Intcode.Vector (memory)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, ParsecT, ShowErrorComponent(..), anySingle, between, customFailure, getInput, getParserState, notFollowedBy, optional, parse, parseErrorPretty, runParserT, sepBy, setInput, setParserState, skipMany, skipSome, skipMany, skipManyTill, some, try, withRecovery)
-import Text.Megaparsec.Char (char, newline, printChar, space, string)
-import Text.Megaparsec.Char.Lexer (decimal, signed)
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
+import Intcode.Vector (memory, parser)
+import Text.Megaparsec (MonadParsec, ParseErrorBundle, ParsecT, ShowErrorComponent(..), anySingle, between, customFailure, getInput, getParserState, notFollowedBy, optional, parse, parseErrorPretty, runParserT, setInput, setParserState, skipMany, skipSome, skipMany, skipManyTill, some, try, withRecovery)
+import Text.Megaparsec.Char (newline, printChar, space, string)
+import Text.Megaparsec.Char.Lexer (decimal)
 
 data SantaError = Loop | NoPath | NoTarget | NoCombination
   deriving (Eq, Generic, NFData, Ord)

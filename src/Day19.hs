@@ -7,22 +7,14 @@ module Day19 (day19a, day19b) where
 
 import Control.Monad.ST (runST)
 import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Intcode (run)
-import Intcode.Vector (memory)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char)
-import Text.Megaparsec.Char.Lexer (decimal, signed)
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
+import Intcode.Vector (parser, run)
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 program :: (Vector v Int) => v Int -> Int -> Int -> Bool
 program mem0 x y = runST $ do
-    mem <- memory mem0
-    [ret] <- run mem [x, y]
+    [ret] <- run mem0 [x, y]
     return $ toEnum ret
 
 day19a :: String -> Either (ParseErrorBundle String Void) Int

@@ -12,19 +12,13 @@ import Data.Ix (inRange)
 import qualified Data.Map.Lazy as Map (assocs, null, singleton)
 import Data.STRef (newSTRef, readSTRef, writeSTRef)
 import qualified Data.Vector as Boxed (Vector)
-import Data.Vector.Generic (Vector, (//))
-import qualified Data.Vector.Generic as Vector (fromList)
+import Data.Vector.Generic ((//))
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
 import Intcode (Memory(..), run)
-import Intcode.Vector (memory)
+import Intcode.Vector (memory, parser)
 import Linear(Linear(..))
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char)
-import Text.Megaparsec.Char.Lexer (decimal)
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> decimal `sepBy` char ','
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 day2a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
 day2a input = do

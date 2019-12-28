@@ -1,15 +1,18 @@
-{-# LANGUAGE RecordWildCards, ViewPatterns #-}
-module Intcode.Vector (memory, run) where
+{-# LANGUAGE FlexibleContexts, RecordWildCards, ViewPatterns #-}
+module Intcode.Vector (memory, parser, run) where
 
 import Control.Monad (forM_)
 import Control.Monad.Primitive (PrimMonad)
 import Data.Functor (($>))
 import Data.Primitive.MutVar (newMutVar, readMutVar, writeMutVar)
-import Data.Vector.Generic (Vector, thaw)
+import Data.Vector.Generic (Vector, fromList, thaw)
 import Data.Vector.Generic.Mutable (unsafeGrow, unsafeRead, unsafeWrite)
 import qualified Data.Vector.Generic.Mutable as Vector (length)
 import Intcode (Memory(..))
 import qualified Intcode (run)
+import Text.Megaparsec (MonadParsec, eof, sepBy)
+import Text.Megaparsec.Char (char, space)
+import Text.Megaparsec.Char.Lexer (signed, decimal)
 
 memory :: (Vector v e, Integral e, PrimMonad m) => v e -> m (Memory m e)
 memory mem0 = do
@@ -34,3 +37,6 @@ memory mem0 = do
 
 run :: (Vector v e, Integral e, PrimMonad m) => v e -> [e] -> m [e]
 run mem0 input = memory mem0 >>= flip Intcode.run input
+
+parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
+parser = fromList <$> signed (pure ()) decimal `sepBy` char ',' <* space <* eof

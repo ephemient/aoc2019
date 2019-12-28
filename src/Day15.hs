@@ -21,17 +21,12 @@ import Data.Semigroup (Last(..))
 import Data.Set (Set)
 import qualified Data.Set as Set (delete, fromList, insert, member, singleton)
 import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
 import Intcode (State(State), getOutput, runIntcodeT)
 import Intcode.Lazy (memory)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char)
-import Text.Megaparsec.Char.Lexer (decimal, signed)
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
+import Intcode.Vector (parser)
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 advance :: (Vector v e, Integral e, Monad m) =>
     (v e, e, e) -> e -> m (Maybe e, (v e, e, e))

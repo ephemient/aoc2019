@@ -19,18 +19,12 @@ import Data.Map.Lazy ((!?))
 import qualified Data.Map as Map (findWithDefault, fromListWith)
 import Data.Primitive.MutVar (modifyMutVar, newMutVar, readMutVar, writeMutVar)
 import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
 import Intcode (Memory, State(..), getOutput, getState, liftMemory, runIntcodeT, setInput)
 import Intcode.Diff (checkDiff, mem, wrapMemory)
-import Intcode.Vector (memory)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char)
-import Text.Megaparsec.Char.Lexer (decimal, signed)
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
+import Intcode.Vector (memory, parser)
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 newtype Computer m e = Computer { runComputer :: [e] -> m ([e], Computer m e) }
 
@@ -84,11 +78,11 @@ day23 nat count mem0 = do
                   | Just newInput <- sends !? n
                   = runState {inputQueue = inputQueue' ++ newInput}
                   | otherwise = runState
-                prev' = prev ++ Map.findWithDefault [] 255 sends
+                prev' = Map.findWithDefault prev 255 sends
             monitor prev' nat' . zipWith appendInput [0..] $
                 pre ++ RunState {inputQueue = [], next = next'} : post
       | ~(computer0@RunState {inputQueue} : post) <- computers
-      = let resume nat'' input = monitor [] nat'' $
+      = let resume nat'' input = monitor prev nat'' $
                 computer0 {inputQueue = inputQueue ++ input} : post
         in runNAT nat' resume prev
 

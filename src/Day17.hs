@@ -15,15 +15,12 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (filter, fromSet, keys, null, updateLookupWithKey)
 import qualified Data.Set as Set (fromList, intersection, size)
 import Data.Vector.Generic (Vector, (//))
-import qualified Data.Vector.Generic as Vector (fromList)
 import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
 import Intcode.Char (runAsciiTraceUntilInt)
-import Intcode.Vector (memory)
+import Intcode.Vector (memory, parser)
 import qualified Intcode.Vector (run)
-import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char)
-import Text.Megaparsec.Char.Lexer (decimal, signed)
+import Text.Megaparsec (ParseErrorBundle, parse)
 
 data Command = CommandLeft | CommandRight | CommandStep deriving (Eq)
 instance Show Command where
@@ -37,9 +34,6 @@ instance Show Command where
             showGroup (CommandLeft:_) s' = ',':'L':s'
             showGroup (CommandRight:_) s' = ',':'R':s'
             showGroup steps s' = ',' : shows (length steps) s'
-
-parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
-parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
 
 draw :: (Vector v Int) => v Int -> (Map (Int, Int) Int, (Int, Int), (Int, Int))
 draw mem0 = (Map.fromSet crossing points, position, direction) where
