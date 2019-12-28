@@ -10,10 +10,13 @@ class Intcode(object):
 
     def set_input(self, input):
         if callable(input):
+            assert asyncio.iscoroutinefunction(input)
             self._input = input
             return
         try:
-            self._input = input.__aiter__().__anext__
+            input = input.__aiter__().__anext__
+            assert asyncio.iscoroutinefunction(input)
+            self._input = input
             return
         except AttributeError as _:
             pass
