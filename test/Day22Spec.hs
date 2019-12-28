@@ -4,8 +4,8 @@ module Day22Spec (spec) where
 import Common (egcd)
 import Data.List (foldl')
 import Data.Vector.Generic (Vector)
-import qualified Data.Vector.Generic as Vector
-import qualified Data.Vector.Unboxed as Unboxed
+import qualified Data.Vector.Generic as Vector ((++), backpermute, enumFromN, fromList, generate, iterateN, length, splitAt, reverse)
+import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
 import Day22 (Operation(..), applyTimes, mpow, parser)
 import Test.Hspec (Spec, describe, it, shouldBe)

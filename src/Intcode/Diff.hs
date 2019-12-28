@@ -4,8 +4,8 @@ module Intcode.Diff (DiffableMemory, checkDiff, getDiffs, mem, undoDiffs, wrapMe
 import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Functor (($>))
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
-import Data.Primitive.MutVar (MutVar, modifyMutVar, newMutVar, readMutVar, writeMutVar)
+import qualified Data.Map.Strict as Map (assocs, delete, empty, insert, lookup, null)
+import Data.Primitive.MutVar (MutVar, modifyMutVar', newMutVar, readMutVar, writeMutVar)
 import Intcode (Memory(..))
 
 data DiffableMemory m e = DiffableMemory
@@ -20,9 +20,11 @@ checkDiff DiffableMemory {..} = do
     mapM_ (uncurry $ writeMem delegate) $ Map.assocs diff
     writeMutVar diffRef Map.empty $> Map.null diff
 
+-- |Returns memory diffs since the last 'checkDiff'.
 getDiffs :: (PrimMonad m, Ord e) => DiffableMemory m e -> m (Map e e)
 getDiffs DiffableMemory {diffRef} = readMutVar diffRef
 
+-- |Restores memory to the state at the last 'checkDiff'.
 undoDiffs :: (PrimMonad m, Ord e) => DiffableMemory m e -> m ()
 undoDiffs DiffableMemory {diffRef} = writeMutVar diffRef Map.empty
 
@@ -32,7 +34,7 @@ mem DiffableMemory {delegate = Memory {..}, ..} = Memory
         Map.lookup i <$> readMutVar diffRef >>= maybe (readMem i) return
   , writeMem = \i v -> do
         v' <- readMem i
-        modifyMutVar diffRef $ if v == v' then Map.delete i else Map.insert i v
+        modifyMutVar' diffRef $ if v == v' then Map.delete i else Map.insert i v
   }
 
 wrapMemory :: (PrimMonad m, Ord e) => Memory m e -> m (DiffableMemory m e)

@@ -3,7 +3,7 @@
 module Linear (Linear(..)) where
 
 import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as Map
+import qualified Data.Map.Lazy as Map (empty, filter, null, unionWith)
 
 data Linear a b = Linear { constant :: a, variables :: Map b a }
   deriving (Eq, Show)
