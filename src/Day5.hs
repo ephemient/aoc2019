@@ -2,33 +2,33 @@
 Module:         Day5
 Description:    <https://adventofcode.com/2019/day/5 Day 5: Sunny with a Chance of Asteroids>
 -}
-{-# LANGUAGE FlexibleContexts, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, TypeApplications, ViewPatterns #-}
 module Day5 (day5a, day5b) where
 
-import Control.Monad.ST (ST, runST)
-import Data.Array.ST (STUArray, thaw)
-import Data.Array.Unboxed (IArray, UArray, listArray)
-import Data.List.NonEmpty (nonEmpty)
-import qualified Data.List.NonEmpty as NonEmpty (last)
+import Control.Monad.ST (runST)
+import Data.Vector.Generic (Vector)
+import qualified Data.Vector.Generic as Vector (fromList)
+import qualified Data.Vector.Unboxed as Unboxed (Vector)
 import Data.Void (Void)
-import Intcode.Array (run)
+import Intcode (run)
+import Intcode.Vector (memory)
 import Text.Megaparsec (MonadParsec, ParseErrorBundle, parse, sepBy)
-import Text.Megaparsec.Char (char, space)
+import Text.Megaparsec.Char (char)
 import Text.Megaparsec.Char.Lexer (signed, decimal)
 
-parser :: (IArray a e, Integral e, MonadParsec err String m) => m (a Int e)
-parser = do
-    ints <- signed (return ()) decimal `sepBy` char ',' <* space
-    return $ listArray (0, length ints - 1) ints
+parser :: (Vector v e, Integral e, MonadParsec err String m) => m (v e)
+parser = Vector.fromList <$> signed (return ()) decimal `sepBy` char ','
+
+diagnostic :: (Eq a, Num a) => [a] -> Maybe a
+diagnostic (dropWhile (== 0) -> [a]) = Just a
+diagnostic _ = Nothing
 
 day5a :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
-day5a input = fmap NonEmpty.last . nonEmpty <$> do
-    mem <- parse (parser @UArray) "" input
-    return $ runST $ thaw mem >>= flip run' [1]
-  where run' = run :: STUArray s Int Int -> [Int] -> ST s [Int]
+day5a input = diagnostic <$> do
+    mem <- parse (parser @Unboxed.Vector) "" input
+    return $ runST $ memory mem >>= flip run [1]
 
 day5b :: String -> Either (ParseErrorBundle String Void) (Maybe Int)
-day5b input = fmap NonEmpty.last . nonEmpty <$> do
-    mem <- parse (parser @UArray) "" input
-    return $ runST $ thaw mem >>= flip run' [5]
-  where run' = run :: STUArray s Int Int -> [Int] -> ST s [Int]
+day5b input = diagnostic <$> do
+    mem <- parse (parser @Unboxed.Vector) "" input
+    return $ runST $ memory mem >>= flip run [5]
