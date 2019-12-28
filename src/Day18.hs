@@ -2,7 +2,7 @@
 Module:         Day18
 Description:    <https://adventofcode.com/2019/day/18 Day 18: Many-Worlds Interpretation>
 -}
-{-# LANGUAGE FlexibleContexts, TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Day18 (day18a, day18b) where
 
 import Common (bfsM, dijkstraM2, neighbors)
