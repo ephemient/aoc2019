@@ -1,36 +1,29 @@
-{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Reduce duplication" #-}
 module IntcodeSpec (spec) where
 
 import Control.Monad.State (evalState)
-import Data.Array.IO (IOUArray, getElems, newListArray)
-import Data.Vector.Unboxed (fromList)
-import qualified Intcode.Array (run)
-import qualified Intcode.Lazy (memory)
-import qualified Intcode.Vector (run)
+import qualified Data.Vector.Unboxed as Vector (fromList)
+import Intcode (Memory(..))
 import qualified Intcode (run)
+import qualified Intcode.Lazy (memory)
+import qualified Intcode.Vector (memory, run)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldReturn)
 import Test.QuickCheck ((===), arbitrary)
 import Test.QuickCheck.Monadic (monadicIO, pick, run)
 
 runMem :: [Int] -> IO [Int]
 runMem ints = do
-    mem <- newListArray @IOUArray @Int @IO @Int (0, length ints - 1) ints
-    Intcode.Array.run mem [] `shouldReturn` []
-    getElems mem
-
-runArray :: [Int] -> [Int] -> IO [Int]
-runArray ints input =
-    newListArray @IOUArray @Int @IO @Int (0, length ints - 1) ints >>=
-    flip Intcode.Array.run input
+    mem <- Intcode.Vector.memory $ Vector.fromList ints
+    Intcode.run mem [] `shouldReturn` []
+    mapM (readMem mem) [0..length ints - 1]
 
 runLazy :: [Int] -> [Int] -> [Int]
 runLazy ints input =
-    evalState (Intcode.run Intcode.Lazy.memory input) $ fromList ints
+    evalState (Intcode.run Intcode.Lazy.memory input) $ Vector.fromList ints
 
 runVector :: [Int] -> [Int] -> IO [Int]
-runVector = Intcode.Vector.run . fromList
+runVector = Intcode.Vector.run . Vector.fromList
 
 spec :: Spec
 spec = do
@@ -52,45 +45,45 @@ spec = do
             runMem [1101, 100, -1, 4, 0] `shouldReturn` [1101, 100, -1, 4, 99]
     describe "day 5 part 2" $ do
         it "example 1" $
-            let intcode = runArray [3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8]
+            let intcode = runVector [3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x == 8]
         it "example 2" $
-            let intcode = runArray [3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8]
+            let intcode = runVector [3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x < 8]
         it "example 3" $
-            let intcode = runArray [3, 3, 1108, -1, 8, 3, 4, 3, 99]
+            let intcode = runVector [3, 3, 1108, -1, 8, 3, 4, 3, 99]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x == 8]
         it "example 4" $
-            let intcode = runArray [3, 3, 1107, -1, 8, 3, 4, 3, 99]
+            let intcode = runVector [3, 3, 1107, -1, 8, 3, 4, 3, 99]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x < 8]
         it "example 5" $
-            let intcode = runArray
+            let intcode = runVector
                     [3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x /= 0]
         it "example 6" $
-            let intcode = runArray
+            let intcode = runVector
                     [3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1]
             in monadicIO $ do
                 x <- pick arbitrary
                 output <- run $ intcode [x]
                 return $ output === [fromEnum $ x /= 0]
         it "example 7" $
-            let intcode = runArray
+            let intcode = runVector
                   [ 3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006
                   , 20, 31, 1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20
                   , 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4
