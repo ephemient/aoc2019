@@ -182,7 +182,7 @@ run day showIO funcs = do
 main :: IO ()
 main = do
     run 1 print [day1a, day1b]
-    run 2 (print <=< rightOrFail) [day2a, day2b]
+    run 2 (print <=< justOrFail <=< rightOrFail) [day2a, day2b]
     run 3 (print <=< justOrFail <=< rightOrFail) [day3a, day3b]
     run 4 (print <=< rightOrFail) [day4a, day4b]
     run 5 (print <=< justOrFail <=< rightOrFail) [day5a, day5b]
