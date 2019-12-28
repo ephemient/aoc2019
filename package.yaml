@@ -42,10 +42,10 @@ executables:
     other-modules:
     - Paths_aoc2019
     source-dirs:         app
+    c-sources:           app/cbits/main.c
     ghc-options:
+    - -no-hs-main
     - -threaded
-    - -rtsopts
-    - '"-with-rtsopts=-N -qg"'
     - -pgmL markdown-unlit
     dependencies:
     - aoc2019
